@@ -1,0 +1,8 @@
+project_name        = "honda-iac-training"
+environment         = "training"
+aws_region          = "ap-northeast-1"
+key_name            = "key-HondaKodai-iac"
+acm_certificate_arn = "arn:aws:acm:ap-northeast-1:565032277391:certificate/940f382f-96e1-4892-a07e-5489b64b0aaf"
+db_username         = "HondaKodai" 
+db_password         = "warabi0123HIMIKO!"
+db_name             = "HondaDB"

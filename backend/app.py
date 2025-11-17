@@ -7,6 +7,8 @@ from flask_cors import CORS
 import os
 from deck import Deck
 from game_logic import PokerHand
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'poker-secret-key-2024'
@@ -320,5 +322,5 @@ if __name__ == '__main__':
     
     print('🎮 Poker Server Starting...')
     print('📡 WebSocket server running on http://0.0.0.0:5000')
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=True)
 
