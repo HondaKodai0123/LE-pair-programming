@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オンライン対戦ポーカー</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- タイトル -->
+        <header>
+            <h1>🎮 オンライン対戦ポーカー</h1>
+        </header>
+
+        <!-- ルーム作成・参加画面 -->
+        <div id="lobby-screen" class="screen active">
+            <div class="lobby-content">
+                <h2>ゲームに参加</h2>
+                
+                <div class="input-group">
+                    <label for="player-name">プレイヤー名:</label>
+                    <input type="text" id="player-name" placeholder="名前を入力" maxlength="20">
+                </div>
+
+                <div class="button-group">
+                    <button id="create-room-btn" class="btn btn-primary">ルームを作成</button>
+                </div>
+
+                <div class="divider">
+                    <span>または</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="room-id-input">ルームID:</label>
+                    <input type="text" id="room-id-input" placeholder="6桁のルームID" maxlength="6">
+                </div>
+
+                <div class="button-group">
+                    <button id="join-room-btn" class="btn btn-secondary">ルームに参加</button>
+                </div>
+            </div>
+
+            <div id="room-info" class="room-info hidden">
+                <h3>ルーム情報</h3>
+                <div class="info-item">
+                    <span>ルームID:</span>
+                    <span id="current-room-id" class="room-id-display"></span>
+                    <button id="copy-room-id" class="btn-small">コピー</button>
+                </div>
+                <div id="players-list" class="players-list"></div>
+                <button id="start-game-btn" class="btn btn-success hidden">ゲーム開始</button>
+            </div>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div id="game-screen" class="screen">
+            <div class="game-info">
+                <div class="info-bar">
+                    <span id="room-id-display">ルーム: </span>
+                    <span id="phase-display">待機中</span>
+                    <span id="opponent-status"></span>
+                </div>
+            </div>
+
+            <!-- 相手の手札エリア -->
+            <div class="opponent-area">
+                <h3>相手の手札</h3>
+                <div id="opponent-cards" class="card-container">
+                    <!-- カードバック5枚 -->
+                </div>
+            </div>
+
+            <!-- 自分の手札エリア -->
+            <div class="player-area">
+                <h3>あなたの手札</h3>
+                <div id="player-cards" class="card-container">
+                    <!-- プレイヤーのカード -->
+                </div>
+                <div class="action-buttons">
+                    <button id="exchange-btn" class="btn btn-primary" disabled>カードを交換</button>
+                    <button id="skip-exchange-btn" class="btn btn-secondary" disabled>交換しない</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="result-screen" class="screen">
+            <div class="result-content">
+                <h2 id="result-title">ゲーム結果</h2>
+                
+                <div class="result-section">
+                    <h3>あなたの手札</h3>
+                    <div id="your-result-cards" class="card-container"></div>
+                    <div id="your-hand-name" class="hand-name"></div>
+                </div>
+
+                <div class="vs-divider">VS</div>
+
+                <div class="result-section">
+                    <h3>相手の手札</h3>
+                    <div id="opponent-result-cards" class="card-container"></div>
+                    <div id="opponent-hand-name" class="hand-name"></div>
+                </div>
+
+                <div class="button-group">
+                    <button id="play-again-btn" class="btn btn-primary">もう一度プレイ</button>
+                    <button id="leave-room-btn" class="btn btn-secondary">ルームを退出</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ステータスメッセージ -->
+        <div id="status-message" class="status-message"></div>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,476 @@
+/**
+ * オンライン対戦ポーカー - スタイルシート
+ */
+
+/* リセット */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ヘッダー */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: white;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 画面切り替え */
+.screen {
+    display: none;
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.screen.active {
+    display: block;
+}
+
+/* ロビー画面 */
+.lobby-content {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.lobby-content h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #667eea;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+/* ボタン */
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #5a6268;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #218838;
+}
+
+.btn-small {
+    padding: 5px 15px;
+    font-size: 0.9rem;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-small:hover {
+    background: #5568d3;
+}
+
+/* 区切り線 */
+.divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: #ddd;
+}
+
+.divider::before {
+    left: 0;
+}
+
+.divider::after {
+    right: 0;
+}
+
+.divider span {
+    background: white;
+    padding: 0 15px;
+    color: #999;
+}
+
+/* ルーム情報 */
+.room-info {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.room-info.hidden {
+    display: none;
+}
+
+.room-info h3 {
+    margin-bottom: 15px;
+    color: #667eea;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.room-id-display {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #667eea;
+    letter-spacing: 2px;
+}
+
+.players-list h4 {
+    margin-bottom: 10px;
+}
+
+.player-item {
+    padding: 10px;
+    background: white;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+/* ゲーム画面 */
+.game-info {
+    margin-bottom: 20px;
+}
+
+.info-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.opponent-area,
+.player-area {
+    margin-bottom: 30px;
+}
+
+.opponent-area h3,
+.player-area h3 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #667eea;
+}
+
+/* カードコンテナ */
+.card-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-height: 180px;
+    padding: 20px;
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    border-radius: 10px;
+}
+
+/* カード */
+.card {
+    width: 100px;
+    height: 150px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+}
+
+.card.selected {
+    transform: translateY(-20px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.5);
+    border: 3px solid #667eea;
+}
+
+.card.red {
+    color: #e74c3c;
+}
+
+.card.black {
+    color: #2c3e50;
+}
+
+.card-corner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.card-corner.bottom-right {
+    transform: rotate(180deg);
+}
+
+.card-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.card-suit {
+    font-size: 1.5rem;
+}
+
+.card-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    opacity: 0.3;
+}
+
+/* カードバック */
+.card-back {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    cursor: default;
+}
+
+.card-back:hover {
+    transform: none;
+}
+
+.card-back-pattern {
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.1) 10px,
+        transparent 10px,
+        transparent 20px
+    );
+}
+
+/* アクションボタン */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+/* 結果画面 */
+.result-content {
+    text-align: center;
+}
+
+#result-title {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+}
+
+#result-title.win {
+    color: #28a745;
+}
+
+#result-title.lose {
+    color: #dc3545;
+}
+
+#result-title.draw {
+    color: #ffc107;
+}
+
+.result-section {
+    margin-bottom: 30px;
+}
+
+.result-section h3 {
+    margin-bottom: 10px;
+    color: #667eea;
+}
+
+.hand-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 15px;
+    color: #667eea;
+}
+
+.vs-divider {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #999;
+    margin: 20px 0;
+}
+
+/* ステータスメッセージ */
+.status-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: translateX(400px);
+    transition: transform 0.3s;
+    z-index: 1000;
+    max-width: 300px;
+}
+
+.status-message.show {
+    transform: translateX(0);
+}
+
+.status-message.success {
+    border-left: 4px solid #28a745;
+}
+
+.status-message.error {
+    border-left: 4px solid #dc3545;
+}
+
+.status-message.warning {
+    border-left: 4px solid #ffc107;
+}
+
+.status-message.info {
+    border-left: 4px solid #17a2b8;
+}
+
+/* ユーティリティ */
+.hidden {
+    display: none !important;
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    .card {
+        width: 70px;
+        height: 105px;
+    }
+
+    .card-value {
+        font-size: 1rem;
+    }
+
+    .card-suit {
+        font-size: 1.2rem;
+    }
+
+    .card-center {
+        font-size: 2rem;
+    }
+
+    .screen {
+        padding: 15px;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
