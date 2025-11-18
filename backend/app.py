@@ -1,7 +1,7 @@
 """
 Flask + SocketIO ポーカーゲームサーバー
 """
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_cors import CORS
 import os
@@ -317,9 +317,6 @@ def handle_reset_game(data):
 
 
 if __name__ == '__main__':
-    # requestオブジェクトをインポート
-    from flask import request
-    
     print('🎮 Poker Server Starting...')
     print('📡 WebSocket server running on http://0.0.0.0:5000')
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=True)
