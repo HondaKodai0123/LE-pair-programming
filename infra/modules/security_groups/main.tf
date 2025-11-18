@@ -70,6 +70,14 @@ resource "aws_security_group" "ec2" {
    cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Inbound: Flask app (port 5000) from Internet
+  ingress {
+    description = "Flask app from Internet"
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   # Outbound: allow all (simplified)
   egress {
