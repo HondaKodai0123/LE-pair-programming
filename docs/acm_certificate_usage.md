@@ -158,8 +158,8 @@ honda-record-1.postudio.help → ALBのIPアドレス（Aレコード）
 
 | URL | 説明 | 証明書 |
 |-----|------|--------|
-| `https://honda-iac-training-alb-1028431235.ap-northeast-1.elb.amazonaws.com` | ALB経由（HTTPS） | ✅ ACM証明書 |
-| `http://honda-iac-training-alb-1028431235.ap-northeast-1.elb.amazonaws.com` | ALB経由（HTTP→HTTPSリダイレクト） | - |
+| `https://honda-record-1.postudio.help` | ドメイン経由（HTTPS） | ✅ ACM証明書 |
+| `http://honda-record-1.postudio.help` | ドメイン経由（HTTP→HTTPSリダイレクト） | - |
 | `http://54.95.13.1:5000` | EC2直接アクセス（HTTP） | ❌ なし |
 | `http://54.95.13.1` | EC2直接アクセス（Nginx経由、HTTP） | ❌ なし |
 | `http://honda-record-1.postudio.help` | ドメイン経由（現在はEC2を指している可能性） | ❌ なし |
@@ -168,13 +168,10 @@ honda-record-1.postudio.help → ALBのIPアドレス（Aレコード）
 
 **HTTPSアクセス（ACM証明書使用）**:
 ```
-https://honda-iac-training-alb-1028431235.ap-northeast-1.elb.amazonaws.com
-```
-
-**ドメイン経由でHTTPSアクセス（DNS設定後）**:
-```
 https://honda-record-1.postudio.help
 ```
+
+**動作確認済み**: ✅ HTTP/2 200 OK
 
 ---
 
@@ -183,14 +180,15 @@ https://honda-record-1.postudio.help
 ### ALB経由のHTTPSアクセス確認
 
 ```bash
-# HTTPSアクセステスト
-curl -I https://honda-iac-training-alb-1028431235.ap-northeast-1.elb.amazonaws.com
+# ドメイン経由でHTTPSアクセステスト
+curl -I https://honda-record-1.postudio.help
 
-# 期待される結果:
+# 実際の結果:
 # HTTP/2 200
-# または
-# HTTP/1.1 200 OK
+# server: nginx/1.28.0
 ```
+
+**注意**: ALBのDNS名ではアクセスできません（証明書がドメイン名に対して発行されているため）
 
 ### 証明書の確認
 
@@ -212,15 +210,12 @@ openssl s_client -connect honda-iac-training-alb-1028431235.ap-northeast-1.elb.a
 
 ### アクセス方法
 
-**推奨**: ALB経由でHTTPSアクセス
-```
-https://honda-iac-training-alb-1028431235.ap-northeast-1.elb.amazonaws.com
-```
-
-**ドメイン経由（DNS設定後）**:
+**推奨**: ドメイン経由でHTTPSアクセス（ACM証明書使用）
 ```
 https://honda-record-1.postudio.help
 ```
+
+**動作確認済み**: ✅ HTTP/2 200 OK（正常に動作中）
 
 ### certbotは不要
 
@@ -241,7 +236,9 @@ https://honda-record-1.postudio.help
 
 ---
 
-**結論**: **ACM証明書は既に使用可能です！** ALB経由でHTTPSアクセスできます。
+**結論**: **ACM証明書は既に使用可能です！** ドメイン経由でHTTPSアクセスできます。
+
+**アクセスURL**: `https://honda-record-1.postudio.help` ✅ 動作確認済み
 
 ---
 
