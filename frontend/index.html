@@ -75,8 +75,19 @@
             <!-- 自分の手札エリア -->
             <div class="player-area">
                 <h3>あなたの手札</h3>
-                <div id="player-cards" class="card-container">
-                    <!-- プレイヤーのカード -->
+                <div class="hand-comparison">
+                    <div class="hand-section">
+                        <h4>交換前</h4>
+                        <div id="player-cards-before" class="card-container">
+                            <!-- 交換前の手札 -->
+                        </div>
+                    </div>
+                    <div class="hand-section">
+                        <h4>交換後</h4>
+                        <div id="player-cards" class="card-container">
+                            <!-- プレイヤーのカード -->
+                        </div>
+                    </div>
                 </div>
                 <div class="action-buttons">
                     <button id="exchange-btn" class="btn btn-primary" disabled>カードを交換</button>

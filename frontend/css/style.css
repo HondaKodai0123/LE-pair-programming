@@ -249,6 +249,27 @@ header h1 {
     color: #667eea;
 }
 
+/* 手札比較エリア */
+.hand-comparison {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.hand-section {
+    flex: 1;
+    max-width: 50%;
+}
+
+.hand-section h4 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #555;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
 /* カードコンテナ */
 .card-container {
     display: flex;

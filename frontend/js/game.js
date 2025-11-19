@@ -6,6 +6,7 @@
 let socket;
 let currentRoomId = null;
 let playerHand = [];
+let playerHandBeforeExchange = []; // 交換前の手札
 let selectedCards = [];
 let selectedCardIds = []; // 選択されたカードのIDを保存（並び替え対応）
 let gamePhase = 'lobby';
@@ -66,10 +67,12 @@ function initializeSocket() {
     // カード配布
     socket.on('cards_dealt', (data) => {
         playerHand = sortHand(data.hand); // 自動並び替え
+        playerHandBeforeExchange = []; // 交換前の手札をクリア
         selectedCardIds = []; // 選択をリセット
         gamePhase = 'draw_phase';
         showScreen('game-screen');
         renderPlayerCards();
+        renderPlayerCardsBefore(); // 交換前の手札を表示（初期状態では空）
         enableExchangeButtons();
         showStatus('カードが配られました。交換するカードを選んでください。', 'info');
     });
@@ -78,10 +81,15 @@ function initializeSocket() {
     socket.on('cards_exchanged', (data) => {
         console.log('cards_exchanged イベント受信:', data);
         console.log('交換後の手札（並び替え前）:', data.hand);
+        // 交換前の手札を保存（まだ保存されていない場合）
+        if (playerHandBeforeExchange.length === 0) {
+            playerHandBeforeExchange = [...playerHand];
+        }
         playerHand = sortHand(data.hand); // 自動並び替え
         console.log('並び替え後のplayerHand:', playerHand);
         selectedCardIds = []; // 選択をリセット
         renderPlayerCards();
+        renderPlayerCardsBefore(); // 交換前の手札を表示
         disableExchangeButtons();
         showStatus('カード交換完了。相手の交換を待っています...', 'info');
     });
@@ -157,6 +165,12 @@ function setupEventListeners() {
         console.log('交換ボタンクリック');
         console.log('選択中のカードID:', selectedCardIds);
         console.log('現在のplayerHand:', playerHand);
+        
+        // 交換前の手札を保存
+        if (playerHandBeforeExchange.length === 0) {
+            playerHandBeforeExchange = [...playerHand];
+            renderPlayerCardsBefore(); // 交換前の手札を表示
+        }
         
         const indices = getSelectedCardIndices();
         console.log('取得したインデックス:', indices);
@@ -339,6 +353,52 @@ function renderPlayerCards() {
     playerHand.forEach((card, index) => {
         const cardElement = createCardElement(card, index);
         container.appendChild(cardElement);
+    });
+}
+
+/**
+ * 交換前のプレイヤーのカードを描画（選択不可）
+ */
+function renderPlayerCardsBefore() {
+    const container = document.getElementById('player-cards-before');
+    if (!container) {
+        console.error('player-cards-before コンテナが見つかりません');
+        return;
+    }
+    container.innerHTML = '';
+    
+    if (playerHandBeforeExchange.length === 0) {
+        // 交換前の手札がない場合は空にする
+        return;
+    }
+    
+    console.log('renderPlayerCardsBefore: playerHandBeforeExchange =', playerHandBeforeExchange);
+    
+    playerHandBeforeExchange.forEach((card, index) => {
+        // 交換前の手札は選択不可なので、クリックイベントなしのカード要素を作成
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card';
+        cardDiv.dataset.index = index;
+        cardDiv.style.opacity = '0.7'; // 少し薄く表示
+        
+        // スートの色
+        const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+        cardDiv.classList.add(color);
+        
+        // カードの表示
+        cardDiv.innerHTML = `
+            <div class="card-corner top-left">
+                <div class="card-value">${card.label}</div>
+                <div class="card-suit">${card.suit}</div>
+            </div>
+            <div class="card-center">${card.suit}</div>
+            <div class="card-corner bottom-right">
+                <div class="card-value">${card.label}</div>
+                <div class="card-suit">${card.suit}</div>
+            </div>
+        `;
+        
+        container.appendChild(cardDiv);
     });
 }
 
@@ -542,9 +602,17 @@ function showStatus(message, type = 'info') {
  */
 function resetGame() {
     playerHand = [];
+    playerHandBeforeExchange = [];
     selectedCards = [];
     selectedCardIds = [];
     gamePhase = 'lobby';
-    document.getElementById('player-cards').innerHTML = '';
+    const playerCardsContainer = document.getElementById('player-cards');
+    if (playerCardsContainer) {
+        playerCardsContainer.innerHTML = '';
+    }
+    const playerCardsBeforeContainer = document.getElementById('player-cards-before');
+    if (playerCardsBeforeContainer) {
+        playerCardsBeforeContainer.innerHTML = '';
+    }
 }
 
