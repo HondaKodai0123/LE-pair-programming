@@ -7,6 +7,7 @@ from flask_cors import CORS
 import os
 from deck import Deck
 from game_logic import PokerHand
+from hand_sorter import sort_hand
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -59,7 +60,9 @@ class GameRoom:
         """カードを配る"""
         self.deck.reset()
         for socket_id in self.players:
-            self.players[socket_id]['hand'] = self.deck.draw(5)
+            hand = self.deck.draw(5)
+            # クライアント側と同じ並び替えロジックを適用
+            self.players[socket_id]['hand'] = sort_hand(hand)
             self.players[socket_id]['ready'] = False
         self.phase = 'draw_phase'
     
@@ -78,6 +81,9 @@ class GameRoom:
         # 新しいカードを引く
         new_cards = self.deck.draw(len(card_indices))
         player['hand'].extend(new_cards)
+        
+        # 交換後もクライアント側と同じ並び替えロジックを適用
+        player['hand'] = sort_hand(player['hand'])
         
         player['ready'] = True
         return True
