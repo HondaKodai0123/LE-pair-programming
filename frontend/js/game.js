@@ -540,68 +540,50 @@ function toggleCardSelection(cardElement, cardId, currentIndex) {
 
 /**
  * 選択されたカードのインデックスを取得
+ * カードIDから確実にインデックスを取得する（インデックスの不一致を防ぐため）
  */
 function getSelectedCardIndices() {
-    // 直接保存されているインデックスを使用（並び替え後も有効なインデックスを保持）
-    // ただし、並び替え後にインデックスが変わっている可能性があるので、
-    // カードIDとインデックスの両方を使って検証
-    const validIndices = [];
+    const indices = [];
     
-    selectedCardIndices.forEach(index => {
-        // インデックスが有効範囲内かチェック
-        if (index >= 0 && index < playerHand.length) {
-            // カードIDと一致するか確認
-            const card = playerHand[index];
-            const cardId = `${card.suit}-${card.value}`;
-            if (selectedCardIds.includes(cardId)) {
-                validIndices.push(index);
-            } else {
-                console.warn('インデックス', index, 'のカードIDが一致しません');
-            }
+    console.log('getSelectedCardIndices: selectedCardIds =', selectedCardIds);
+    console.log('getSelectedCardIndices: playerHand =', playerHand);
+    
+    // カードIDから直接インデックスを取得（最も確実な方法）
+    selectedCardIds.forEach(cardId => {
+        const parts = cardId.split('-');
+        if (parts.length < 2) {
+            console.error('不正なcardId:', cardId);
+            return;
+        }
+        
+        const suit = parts[0];
+        const valueStr = parts[1];
+        
+        let value;
+        if (valueStr && valueStr.match(/^\d+$/)) {
+            value = parseInt(valueStr);
         } else {
-            console.warn('無効なインデックス:', index);
+            console.error('不正なvalue:', valueStr);
+            return;
+        }
+        
+        // 現在のplayerHandから該当するカードのインデックスを探す
+        const foundIndex = playerHand.findIndex(card => 
+            card.suit === suit && card.value === value
+        );
+        
+        if (foundIndex !== -1) {
+            indices.push(foundIndex);
+            console.log(`カードID ${cardId} のインデックス: ${foundIndex}, カード: ${playerHand[foundIndex].label}${playerHand[foundIndex].suit}`);
+        } else {
+            console.error('カードが見つかりません:', cardId, 'playerHand:', playerHand.map(c => `${c.label}${c.suit}`));
         }
     });
     
-    // もしインデックスが無効な場合は、カードIDから再検索
-    if (validIndices.length !== selectedCardIds.length) {
-        console.warn('インデックスが一致しないため、カードIDから再検索します');
-        const indicesFromIds = [];
-        selectedCardIds.forEach(cardId => {
-            const parts = cardId.split('-');
-            if (parts.length < 2) {
-                console.error('不正なcardId:', cardId);
-                return;
-            }
-            
-            const suit = parts[0];
-            const valueStr = parts[1];
-            
-            let value;
-            if (valueStr && valueStr.match(/^\d+$/)) {
-                value = parseInt(valueStr);
-            } else {
-                console.error('不正なvalue:', valueStr);
-                return;
-            }
-            
-            const foundIndex = playerHand.findIndex(card => 
-                card.suit === suit && card.value === value
-            );
-            
-            if (foundIndex !== -1) {
-                indicesFromIds.push(foundIndex);
-            } else {
-                console.error('カードが見つかりません:', cardId);
-            }
-        });
-        
-        console.log('カードIDから取得したインデックス:', indicesFromIds);
-        return indicesFromIds;
-    }
+    console.log('選択されたカードのインデックス:', indices);
+    console.log('選択されたカード:', indices.map(idx => `${playerHand[idx].label}${playerHand[idx].suit}`));
     
-    console.log('選択されたカードのインデックス:', validIndices);
-    return validIndices;
+    return indices;
 }
 
 /**
