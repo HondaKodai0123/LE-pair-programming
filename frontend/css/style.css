@@ -652,64 +652,59 @@ header h1 {
 
 .result-status.win {
     color: #28a745;
+    animation: winCelebration 1.5s ease-in-out infinite;
 }
 
 .result-status.lose {
     color: #dc3545;
+    animation: loseDisappointment 1.5s ease-in-out infinite;
 }
 
 .result-status.draw {
     color: #ffc107;
 }
 
-.result-status .char {
-    display: inline-block;
-}
-
-/* 勝ちのアニメーション（左から1文字ずつジャンプ） */
-.result-status.win .char {
-    animation: charJump 0.6s ease-in-out infinite;
-}
-
-.result-status.win .char:nth-child(1) { animation-delay: 0s; }
-.result-status.win .char:nth-child(2) { animation-delay: 0.1s; }
-.result-status.win .char:nth-child(3) { animation-delay: 0.2s; }
-.result-status.win .char:nth-child(4) { animation-delay: 0.3s; }
-.result-status.win .char:nth-child(5) { animation-delay: 0.4s; }
-.result-status.win .char:nth-child(6) { animation-delay: 0.5s; }
-.result-status.win .char:nth-child(7) { animation-delay: 0.6s; }
-.result-status.win .char:nth-child(8) { animation-delay: 0.7s; }
-
-@keyframes charJump {
+/* 勝ちのアニメーション（元気なイメージ：拡大縮小、回転、光る効果、浮き上がる） */
+@keyframes winCelebration {
     0%, 100% {
-        transform: translateY(0);
+        transform: rotate(15deg) scale(1) translateY(0);
+        text-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    }
+    25% {
+        transform: rotate(18deg) scale(1.15) translateY(-8px);
+        text-shadow: 0 0 20px rgba(40, 167, 69, 0.8), 0 0 30px rgba(40, 167, 69, 0.6);
     }
     50% {
-        transform: translateY(-10px);
+        transform: rotate(12deg) scale(1.2) translateY(-12px);
+        text-shadow: 0 0 25px rgba(40, 167, 69, 1), 0 0 40px rgba(40, 167, 69, 0.8);
+    }
+    75% {
+        transform: rotate(18deg) scale(1.15) translateY(-8px);
+        text-shadow: 0 0 20px rgba(40, 167, 69, 0.8), 0 0 30px rgba(40, 167, 69, 0.6);
     }
 }
 
-/* 負けのアニメーション（左から1文字ずつ色を暗く） */
-.result-status.lose .char {
-    animation: charDarken 0.6s ease-in-out infinite;
-}
-
-.result-status.lose .char:nth-child(1) { animation-delay: 0s; }
-.result-status.lose .char:nth-child(2) { animation-delay: 0.1s; }
-.result-status.lose .char:nth-child(3) { animation-delay: 0.2s; }
-.result-status.lose .char:nth-child(4) { animation-delay: 0.3s; }
-.result-status.lose .char:nth-child(5) { animation-delay: 0.4s; }
-.result-status.lose .char:nth-child(6) { animation-delay: 0.5s; }
-.result-status.lose .char:nth-child(7) { animation-delay: 0.6s; }
-
-@keyframes charDarken {
+/* 負けのアニメーション（残念なイメージ：左右に揺れる、色が暗くなる、沈む） */
+@keyframes loseDisappointment {
     0%, 100% {
+        transform: rotate(15deg) scale(1) translateX(0) translateY(0);
         opacity: 1;
         filter: brightness(1);
     }
+    25% {
+        transform: rotate(12deg) scale(0.95) translateX(-8px) translateY(5px);
+        opacity: 0.7;
+        filter: brightness(0.7);
+    }
     50% {
+        transform: rotate(18deg) scale(0.9) translateX(8px) translateY(10px);
         opacity: 0.5;
         filter: brightness(0.5);
+    }
+    75% {
+        transform: rotate(12deg) scale(0.95) translateX(-8px) translateY(5px);
+        opacity: 0.7;
+        filter: brightness(0.7);
     }
 }
 

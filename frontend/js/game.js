@@ -876,15 +876,9 @@ function showResultScreen(data) {
         statusClass = 'result-status draw';
     }
     
-    // 文字を1文字ずつ分割してspanで囲む（アニメーション用）
+    // 勝敗メッセージを表示
     yourResultStatus.className = statusClass;
-    yourResultStatus.innerHTML = '';
-    for (let i = 0; i < statusText.length; i++) {
-        const charSpan = document.createElement('span');
-        charSpan.className = 'char';
-        charSpan.textContent = statusText[i];
-        yourResultStatus.appendChild(charSpan);
-    }
+    yourResultStatus.textContent = statusText;
     
     // あなたの手札
     const yourCardsContainer = document.getElementById('your-result-cards');
