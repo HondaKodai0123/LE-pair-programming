@@ -9,6 +9,7 @@ let playerHand = [];
 let playerHandBeforeExchange = []; // 交換前の手札
 let selectedCards = [];
 let selectedCardIds = []; // 選択されたカードのIDを保存（並び替え対応）
+let selectedCardIndices = []; // 選択されたカードのインデックスを直接保存
 let gamePhase = 'lobby';
 
 // サーバーのURL（本番環境では適切に設定）
@@ -69,6 +70,7 @@ function initializeSocket() {
         playerHand = sortHand(data.hand); // 自動並び替え
         playerHandBeforeExchange = []; // 交換前の手札をクリア
         selectedCardIds = []; // 選択をリセット
+        selectedCardIndices = []; // 選択をリセット
         gamePhase = 'draw_phase';
         showScreen('game-screen');
         renderPlayerCards();
@@ -88,6 +90,7 @@ function initializeSocket() {
         playerHand = sortHand(data.hand); // 自動並び替え
         console.log('並び替え後のplayerHand:', playerHand);
         selectedCardIds = []; // 選択をリセット
+        selectedCardIndices = []; // 選択をリセット
         renderPlayerCards();
         renderPlayerCardsBefore(); // 交換前の手札を表示
         disableExchangeButtons();
@@ -196,6 +199,7 @@ function setupEventListeners() {
         });
         
         selectedCardIds = [];
+        selectedCardIndices = [];
     });
 
     // 交換しない
@@ -352,6 +356,18 @@ function renderPlayerCards() {
     
     playerHand.forEach((card, index) => {
         const cardElement = createCardElement(card, index);
+        // 選択状態を復元
+        const cardId = `${card.suit}-${card.value}`;
+        if (selectedCardIds.includes(cardId)) {
+            cardElement.classList.add('selected');
+            // インデックスも更新
+            const idIndex = selectedCardIds.indexOf(cardId);
+            if (idIndex !== -1 && idIndex < selectedCardIndices.length) {
+                selectedCardIndices[idIndex] = index;
+            } else if (idIndex !== -1) {
+                selectedCardIndices.push(index);
+            }
+        }
         container.appendChild(cardElement);
     });
 }
@@ -459,67 +475,95 @@ function createCardBackElement() {
  * カード選択のトグル（並び替え対応版）
  */
 function toggleCardSelection(cardElement, cardId, currentIndex) {
-    const index = selectedCardIds.indexOf(cardId);
+    const idIndex = selectedCardIds.indexOf(cardId);
+    const indexIndex = selectedCardIndices.indexOf(currentIndex);
     
-    if (index === -1) {
+    if (idIndex === -1) {
         // 選択されていない場合、選択に追加
         if (selectedCardIds.length < 5) {
             selectedCardIds.push(cardId);
+            selectedCardIndices.push(currentIndex);
             cardElement.classList.add('selected');
             console.log('カード選択:', cardId, 'インデックス:', currentIndex);
         }
     } else {
         // 選択されている場合、選択から削除
-        selectedCardIds.splice(index, 1);
+        selectedCardIds.splice(idIndex, 1);
+        if (indexIndex !== -1) {
+            selectedCardIndices.splice(indexIndex, 1);
+        }
         cardElement.classList.remove('selected');
         console.log('カード選択解除:', cardId, 'インデックス:', currentIndex);
     }
     
-    console.log('選択中のカード:', selectedCardIds);
+    console.log('選択中のカードID:', selectedCardIds);
+    console.log('選択中のカードインデックス:', selectedCardIndices);
 }
 
 /**
  * 選択されたカードのインデックスを取得
  */
 function getSelectedCardIndices() {
-    const indices = [];
+    // 直接保存されているインデックスを使用（並び替え後も有効なインデックスを保持）
+    // ただし、並び替え後にインデックスが変わっている可能性があるので、
+    // カードIDとインデックスの両方を使って検証
+    const validIndices = [];
     
-    // 選択されたカードIDごとに、現在のplayerHandから該当するカードのインデックスを探す
-    selectedCardIds.forEach(cardId => {
-        const parts = cardId.split('-');
-        if (parts.length < 2) {
-            console.error('不正なcardId:', cardId);
-            return;
-        }
-        
-        // スートは最初の要素、値は2番目の要素
-        const suit = parts[0];
-        const valueStr = parts[1];
-        
-        // 値が数値かどうかチェック
-        let value;
-        if (valueStr && valueStr.match(/^\d+$/)) {
-            value = parseInt(valueStr);
+    selectedCardIndices.forEach(index => {
+        // インデックスが有効範囲内かチェック
+        if (index >= 0 && index < playerHand.length) {
+            // カードIDと一致するか確認
+            const card = playerHand[index];
+            const cardId = `${card.suit}-${card.value}`;
+            if (selectedCardIds.includes(cardId)) {
+                validIndices.push(index);
+            } else {
+                console.warn('インデックス', index, 'のカードIDが一致しません');
+            }
         } else {
-            // 値が数値でない場合、パースできないのでスキップ
-            console.error('不正なvalue:', valueStr);
-            return;
-        }
-        
-        // 現在のplayerHandから該当するカードのインデックスを探す
-        const foundIndex = playerHand.findIndex(card => 
-            card.suit === suit && card.value === value
-        );
-        
-        if (foundIndex !== -1) {
-            indices.push(foundIndex);
-        } else {
-            console.error('カードが見つかりません:', cardId, 'playerHand:', playerHand);
+            console.warn('無効なインデックス:', index);
         }
     });
     
-    console.log('選択されたカードのインデックス:', indices);
-    return indices;
+    // もしインデックスが無効な場合は、カードIDから再検索
+    if (validIndices.length !== selectedCardIds.length) {
+        console.warn('インデックスが一致しないため、カードIDから再検索します');
+        const indicesFromIds = [];
+        selectedCardIds.forEach(cardId => {
+            const parts = cardId.split('-');
+            if (parts.length < 2) {
+                console.error('不正なcardId:', cardId);
+                return;
+            }
+            
+            const suit = parts[0];
+            const valueStr = parts[1];
+            
+            let value;
+            if (valueStr && valueStr.match(/^\d+$/)) {
+                value = parseInt(valueStr);
+            } else {
+                console.error('不正なvalue:', valueStr);
+                return;
+            }
+            
+            const foundIndex = playerHand.findIndex(card => 
+                card.suit === suit && card.value === value
+            );
+            
+            if (foundIndex !== -1) {
+                indicesFromIds.push(foundIndex);
+            } else {
+                console.error('カードが見つかりません:', cardId);
+            }
+        });
+        
+        console.log('カードIDから取得したインデックス:', indicesFromIds);
+        return indicesFromIds;
+    }
+    
+    console.log('選択されたカードのインデックス:', validIndices);
+    return validIndices;
 }
 
 /**
@@ -605,6 +649,7 @@ function resetGame() {
     playerHandBeforeExchange = [];
     selectedCards = [];
     selectedCardIds = [];
+    selectedCardIndices = [];
     gamePhase = 'lobby';
     const playerCardsContainer = document.getElementById('player-cards');
     if (playerCardsContainer) {
