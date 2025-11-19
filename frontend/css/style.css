@@ -634,18 +634,19 @@ header h1 {
 .result-section h3 {
     margin-bottom: 10px;
     color: #667eea;
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    position: relative;
 }
 
 .result-status {
     font-size: 1.2rem;
     font-weight: bold;
-    transform: rotate(-15deg);
+    position: absolute;
+    left: 120px;
+    top: 0;
+    transform: rotate(15deg);
     transform-origin: left center;
     display: inline-block;
-    margin-left: 10px;
+    white-space: nowrap;
 }
 
 .result-status.win {
