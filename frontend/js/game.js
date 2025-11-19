@@ -7,6 +7,7 @@ let socket;
 let currentRoomId = null;
 let playerHand = [];
 let selectedCards = [];
+let selectedCardIds = []; // 選択されたカードのIDを保存（並び替え対応）
 let gamePhase = 'lobby';
 
 // サーバーのURL（本番環境では適切に設定）
@@ -64,7 +65,8 @@ function initializeSocket() {
 
     // カード配布
     socket.on('cards_dealt', (data) => {
-        playerHand = data.hand;
+        playerHand = sortHand(data.hand); // 自動並び替え
+        selectedCardIds = []; // 選択をリセット
         gamePhase = 'draw_phase';
         showScreen('game-screen');
         renderPlayerCards();
@@ -74,7 +76,8 @@ function initializeSocket() {
 
     // カード交換完了
     socket.on('cards_exchanged', (data) => {
-        playerHand = data.hand;
+        playerHand = sortHand(data.hand); // 自動並び替え
+        selectedCardIds = []; // 選択をリセット
         renderPlayerCards();
         disableExchangeButtons();
         showStatus('カード交換完了。相手の交換を待っています...', 'info');
@@ -148,17 +151,18 @@ function setupEventListeners() {
 
     // カード交換
     document.getElementById('exchange-btn').addEventListener('click', () => {
-        if (selectedCards.length === 0) {
+        const indices = getSelectedCardIndices();
+        if (indices.length === 0) {
             showStatus('交換するカードを選択してください', 'warning');
             return;
         }
         
         socket.emit('exchange_cards', {
             room_id: currentRoomId,
-            card_indices: selectedCards
+            card_indices: indices
         });
         
-        selectedCards = [];
+        selectedCardIds = [];
     });
 
     // 交換しない
@@ -205,6 +209,101 @@ function updatePlayersList(gameState) {
 }
 
 /**
+ * 手札を自動的に並び替える
+ * ペアを左側に、残りを数字の小さい順に配置
+ * Aは1として扱い、A2345の順番にする
+ */
+function sortHand(cards) {
+    if (!cards || cards.length === 0) {
+        return [];
+    }
+    
+    // カードをコピー
+    const sortedCards = [...cards];
+    
+    // Aを1として扱うための値を取得する関数
+    const getSortValue = (card) => {
+        // A（value=14）を1として扱う
+        return card.value === 14 ? 1 : card.value;
+    };
+    
+    // デバッグ: 元のカードを表示
+    console.log('並び替え前:', sortedCards.map(c => `${c.label}(${c.value})`));
+    
+    // 1. 数字の値でグループ化（Aは1として扱う）
+    const valueGroups = {};
+    sortedCards.forEach(card => {
+        const sortValue = getSortValue(card);
+        if (!valueGroups[sortValue]) {
+            valueGroups[sortValue] = [];
+        }
+        valueGroups[sortValue].push(card);
+    });
+    
+    // 2. ペアと単独カードを分離
+    const pairs = [];
+    const singles = [];
+    
+    // 数値キーでソートしてから処理
+    const sortedKeys = Object.keys(valueGroups).map(k => parseInt(k)).sort((a, b) => a - b);
+    
+    sortedKeys.forEach(sortValue => {
+        const group = valueGroups[sortValue];
+        if (group.length >= 2) {
+            // ペア以上がある場合、スートでソート
+            group.sort((a, b) => {
+                const suitOrder = {'♠': 0, '♥': 1, '♦': 2, '♣': 3};
+                return suitOrder[a.suit] - suitOrder[b.suit];
+            });
+            pairs.push(...group);
+        } else {
+            singles.push(...group);
+        }
+    });
+    
+    // 3. ペアを数字の小さい順にソート（Aは1として扱う）
+    pairs.sort((a, b) => {
+        const aSortValue = getSortValue(a);
+        const bSortValue = getSortValue(b);
+        
+        // まず、ペアの種類で比較（トリプル > ペア）
+        const aGroup = valueGroups[aSortValue];
+        const bGroup = valueGroups[bSortValue];
+        if (aGroup.length !== bGroup.length) {
+            return bGroup.length - aGroup.length;
+        }
+        
+        // 同じ種類のペアの場合、数字で比較（Aは1として扱う）
+        if (aSortValue !== bSortValue) {
+            return aSortValue - bSortValue; // 数字の小さい順（A=1）
+        }
+        // 同じ数字の場合はスートでソート
+        const suitOrder = {'♠': 0, '♥': 1, '♦': 2, '♣': 3};
+        return suitOrder[a.suit] - suitOrder[b.suit];
+    });
+    
+    // 4. 単独カードを数字の小さい順にソート（Aは1として扱う）
+    singles.sort((a, b) => {
+        const aSortValue = getSortValue(a);
+        const bSortValue = getSortValue(b);
+        if (aSortValue !== bSortValue) {
+            return aSortValue - bSortValue; // 数字の小さい順（A=1）
+        }
+        // 同じ数字の場合はスートでソート
+        const suitOrder = {'♠': 0, '♥': 1, '♦': 2, '♣': 3};
+        return suitOrder[a.suit] - suitOrder[b.suit];
+    });
+    
+    // 5. ペアを左側に、単独カードを右側に配置
+    const result = [...pairs, ...singles];
+    
+    // デバッグ: 並び替え後のカードを表示
+    console.log('並び替え後:', result.map(c => `${c.label}(${getSortValue(c)})`));
+    
+    return result;
+}
+
+/**
  * プレイヤーのカードを描画
  */
 function renderPlayerCards() {
@@ -224,6 +323,14 @@ function createCardElement(card, index) {
     const cardDiv = document.createElement('div');
     cardDiv.className = 'card';
     cardDiv.dataset.index = index;
+    // 一意のIDを生成（並び替え後も追跡可能）
+    const cardId = `${card.suit}-${card.value}-${index}`;
+    cardDiv.dataset.cardId = cardId;
+    
+    // 既に選択されている場合はselectedクラスを追加
+    if (selectedCardIds.includes(cardId)) {
+        cardDiv.classList.add('selected');
+    }
     
     // スートの色
     const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
@@ -245,7 +352,7 @@ function createCardElement(card, index) {
     // クリックイベント
     cardDiv.addEventListener('click', () => {
         if (gamePhase === 'draw_phase') {
-            toggleCardSelection(cardDiv, index);
+            toggleCardSelection(cardDiv, cardId);
         }
     });
     
@@ -263,18 +370,39 @@ function createCardBackElement() {
 }
 
 /**
- * カード選択のトグル
+ * カード選択のトグル（並び替え対応版）
  */
-function toggleCardSelection(cardElement, index) {
-    if (selectedCards.includes(index)) {
-        selectedCards = selectedCards.filter(i => i !== index);
-        cardElement.classList.remove('selected');
-    } else {
-        if (selectedCards.length < 5) {
-            selectedCards.push(index);
+function toggleCardSelection(cardElement, cardId) {
+    const index = selectedCardIds.indexOf(cardId);
+    
+    if (index === -1) {
+        // 選択されていない場合、選択に追加
+        if (selectedCardIds.length < 5) {
+            selectedCardIds.push(cardId);
             cardElement.classList.add('selected');
         }
+    } else {
+        // 選択されている場合、選択から削除
+        selectedCardIds.splice(index, 1);
+        cardElement.classList.remove('selected');
     }
+}
+
+/**
+ * 選択されたカードのインデックスを取得
+ */
+function getSelectedCardIndices() {
+    return selectedCardIds.map(cardId => {
+        // cardIdから元のインデックスを取得
+        const parts = cardId.split('-');
+        const suit = parts[0];
+        const value = parseInt(parts[1]);
+        
+        // 現在のplayerHandから該当するカードのインデックスを探す
+        return playerHand.findIndex(card => 
+            card.suit === suit && card.value === value
+        );
+    }).filter(index => index !== -1);
 }
 
 /**
@@ -358,6 +486,7 @@ function showStatus(message, type = 'info') {
 function resetGame() {
     playerHand = [];
     selectedCards = [];
+    selectedCardIds = [];
     gamePhase = 'lobby';
     document.getElementById('player-cards').innerHTML = '';
 }
