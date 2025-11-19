@@ -642,11 +642,12 @@ header h1 {
     font-weight: bold;
     position: absolute;
     left: 70%;
-    top: -25px;
+    top: -50px;
     transform: rotate(15deg);
     transform-origin: left top;
     display: inline-block;
     white-space: nowrap;
+    z-index: 10;
 }
 
 .result-status.win {
