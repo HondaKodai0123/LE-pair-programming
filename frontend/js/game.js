@@ -76,7 +76,10 @@ function initializeSocket() {
 
     // カード交換完了
     socket.on('cards_exchanged', (data) => {
+        console.log('cards_exchanged イベント受信:', data);
+        console.log('交換後の手札（並び替え前）:', data.hand);
         playerHand = sortHand(data.hand); // 自動並び替え
+        console.log('並び替え後のplayerHand:', playerHand);
         selectedCardIds = []; // 選択をリセット
         renderPlayerCards();
         disableExchangeButtons();
@@ -267,9 +270,10 @@ function sortHand(cards) {
         const bSortValue = getSortValue(b);
         
         // まず、ペアの種類で比較（トリプル > ペア）
-        const aGroup = valueGroups[aSortValue];
-        const bGroup = valueGroups[bSortValue];
-        if (aGroup.length !== bGroup.length) {
+        // valueGroupsのキーは文字列として扱われるので、数値キーでアクセス
+        const aGroup = valueGroups[aSortValue] || valueGroups[String(aSortValue)];
+        const bGroup = valueGroups[bSortValue] || valueGroups[String(bSortValue)];
+        if (aGroup && bGroup && aGroup.length !== bGroup.length) {
             return bGroup.length - aGroup.length;
         }
         
@@ -308,7 +312,13 @@ function sortHand(cards) {
  */
 function renderPlayerCards() {
     const container = document.getElementById('player-cards');
+    if (!container) {
+        console.error('player-cards コンテナが見つかりません');
+        return;
+    }
     container.innerHTML = '';
+    
+    console.log('renderPlayerCards: playerHand =', playerHand);
     
     playerHand.forEach((card, index) => {
         const cardElement = createCardElement(card, index);
