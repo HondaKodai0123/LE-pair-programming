@@ -641,7 +641,7 @@ header h1 {
     font-size: 2rem;
     font-weight: bold;
     position: absolute;
-    left: 120px;
+    left: 70%;
     top: -25px;
     transform: rotate(15deg);
     transform-origin: left top;
