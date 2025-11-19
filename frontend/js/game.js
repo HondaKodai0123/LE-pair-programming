@@ -92,14 +92,36 @@ function initializeSocket() {
         if (playerHandBeforeExchange.length === 0) {
             playerHandBeforeExchange = [...playerHand];
         }
-        playerHand = sortHand(data.hand); // 自動並び替え
-        console.log('並び替え後のplayerHand:', playerHand);
-        selectedCardIds = []; // 選択をリセット
-        selectedCardIndices = []; // 選択をリセット
-        renderPlayerCards();
-        renderPlayerCardsBefore(); // 交換前の手札を表示
-        disableExchangeButtons();
-        showStatus('カード交換完了。相手の交換を待っています...', 'info');
+        
+        // アニメーション: 既存のカードをフェードアウト
+        const container = document.getElementById('player-cards');
+        if (container) {
+            const existingCards = container.querySelectorAll('.card');
+            existingCards.forEach((card, index) => {
+                card.classList.add('fade-out');
+            });
+            
+            // フェードアウト後に新しいカードを表示
+            setTimeout(() => {
+                playerHand = sortHand(data.hand); // 自動並び替え
+                console.log('並び替え後のplayerHand:', playerHand);
+                selectedCardIds = []; // 選択をリセット
+                selectedCardIndices = []; // 選択をリセット
+                renderPlayerCardsWithAnimation(); // アニメーション付きで描画
+                renderPlayerCardsBefore(); // 交換前の手札を表示
+                disableExchangeButtons();
+                showStatus('カード交換完了。相手の交換を待っています...', 'info');
+            }, 300); // フェードアウトアニメーションの時間
+        } else {
+            // コンテナがない場合は通常通り処理
+            playerHand = sortHand(data.hand);
+            selectedCardIds = [];
+            selectedCardIndices = [];
+            renderPlayerCards();
+            renderPlayerCardsBefore();
+            disableExchangeButtons();
+            showStatus('カード交換完了。相手の交換を待っています...', 'info');
+        }
     });
 
     // 相手待ち
@@ -348,7 +370,7 @@ function sortHand(cards) {
 }
 
 /**
- * プレイヤーのカードを描画
+ * プレイヤーのカードを描画（アニメーション付き）
  */
 function renderPlayerCards() {
     const container = document.getElementById('player-cards');
@@ -374,6 +396,31 @@ function renderPlayerCards() {
                 selectedCardIndices.push(index);
             }
         }
+        // アニメーション: カードを順番に表示
+        cardElement.style.animationDelay = `${index * 0.1}s`;
+        container.appendChild(cardElement);
+    });
+}
+
+/**
+ * プレイヤーのカードを描画（交換時のアニメーション付き）
+ */
+function renderPlayerCardsWithAnimation() {
+    const container = document.getElementById('player-cards');
+    if (!container) {
+        console.error('player-cards コンテナが見つかりません');
+        return;
+    }
+    container.innerHTML = '';
+    
+    console.log('renderPlayerCardsWithAnimation: playerHand =', playerHand);
+    
+    playerHand.forEach((card, index) => {
+        const cardElement = createCardElement(card, index);
+        // フェードインアニメーションを適用
+        cardElement.classList.add('fade-in');
+        // アニメーション: カードを順番に表示
+        cardElement.style.animationDelay = `${index * 0.1}s`;
         container.appendChild(cardElement);
     });
 }
@@ -425,7 +472,7 @@ function renderPlayerCardsBefore() {
 }
 
 /**
- * 交換前のコンテナに選択可能なカードを描画（カード配布時用）
+ * 交換前のコンテナに選択可能なカードを描画（カード配布時用、アニメーション付き）
  */
 function renderPlayerCardsInBeforeContainer() {
     const container = document.getElementById('player-cards-before');
@@ -452,6 +499,8 @@ function renderPlayerCardsInBeforeContainer() {
                 selectedCardIndices.push(index);
             }
         }
+        // アニメーション: カードを順番に表示
+        cardElement.style.animationDelay = `${index * 0.1}s`;
         container.appendChild(cardElement);
     });
 }

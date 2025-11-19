@@ -296,6 +296,54 @@ header h1 {
     flex-direction: column;
     justify-content: space-between;
     padding: 10px;
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+    animation: cardDealIn 0.5s ease-out forwards;
+}
+
+/* fade-inクラスが適用されている場合はcardDealInを無効化 */
+.card.fade-in {
+    animation: cardFadeIn 0.5s ease-out forwards;
+}
+
+/* カード配布アニメーション */
+@keyframes cardDealIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* カード交換アニメーション（フェードアウト） */
+@keyframes cardFadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* カード交換アニメーション（フェードイン） */
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) rotateY(180deg);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) rotateY(0deg);
+    }
+}
+
+.card.fade-out {
+    animation: cardFadeOut 0.3s ease-in forwards;
 }
 
 .card:hover {
