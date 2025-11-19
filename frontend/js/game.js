@@ -862,15 +862,28 @@ function showResultScreen(data) {
     
     // 勝敗を「あなたの手札」の右側に表示
     const yourResultStatus = document.getElementById('your-result-status');
+    let statusText = '';
+    let statusClass = '';
+    
     if (data.winner === 'you') {
-        yourResultStatus.textContent = '🎉 あなたの勝ち！';
-        yourResultStatus.className = 'result-status win';
+        statusText = '🎉 あなたの勝ち！';
+        statusClass = 'result-status win';
     } else if (data.winner === 'opponent') {
-        yourResultStatus.textContent = '😢 あなたの負け';
-        yourResultStatus.className = 'result-status lose';
+        statusText = '😢 あなたの負け';
+        statusClass = 'result-status lose';
     } else {
-        yourResultStatus.textContent = '🤝 引き分け';
-        yourResultStatus.className = 'result-status draw';
+        statusText = '🤝 引き分け';
+        statusClass = 'result-status draw';
+    }
+    
+    // 文字を1文字ずつ分割してspanで囲む（アニメーション用）
+    yourResultStatus.className = statusClass;
+    yourResultStatus.innerHTML = '';
+    for (let i = 0; i < statusText.length; i++) {
+        const charSpan = document.createElement('span');
+        charSpan.className = 'char';
+        charSpan.textContent = statusText[i];
+        yourResultStatus.appendChild(charSpan);
     }
     
     // あなたの手札
