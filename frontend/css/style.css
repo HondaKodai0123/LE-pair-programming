@@ -330,14 +330,14 @@ header h1 {
 /* 手札比較エリア */
 .hand-comparison {
     display: flex;
+    flex-direction: column;
     gap: 20px;
     justify-content: center;
     margin-bottom: 20px;
 }
 
 .hand-section {
-    flex: 1;
-    max-width: 50%;
+    width: 100%;
 }
 
 .hand-section h4 {
