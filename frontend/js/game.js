@@ -894,7 +894,7 @@ function updateRemainingCards(count) {
 }
 
 /**
- * 残りのカードリストを表示
+ * 残りのカードリストを表示（グリッド形式：同じ数字は縦に並べる）
  */
 function renderRemainingCards(cardsList) {
     const remainingCardsArea = document.getElementById('remaining-cards-area');
@@ -907,24 +907,68 @@ function renderRemainingCards(cardsList) {
     // 既存のカードをクリア
     remainingCardsList.innerHTML = '';
     
-    if (!cardsList || cardsList.length === 0) {
+    if (!cardsList) {
         remainingCardsArea.style.display = 'none';
         return;
     }
     
-    // カードをソート（スート順、数字順）
-    const sortedCards = [...cardsList].sort((a, b) => {
-        const suitOrder = {'♠': 0, '♥': 1, '♦': 2, '♣': 3};
-        if (suitOrder[a.suit] !== suitOrder[b.suit]) {
-            return suitOrder[a.suit] - suitOrder[b.suit];
-        }
-        return a.value - b.value;
+    // 残りのカードをマップに変換（検索を高速化）
+    const remainingCardsMap = new Map();
+    cardsList.forEach(card => {
+        const key = `${card.suit}-${card.value}`;
+        remainingCardsMap.set(key, card);
     });
     
-    // カードを表示
-    sortedCards.forEach((card) => {
-        const cardElement = createCardElementForRemaining(card);
-        remainingCardsList.appendChild(cardElement);
+    // 全52枚のカードを生成
+    const suits = ['♠', '♥', '♦', '♣'];
+    const values = [
+        {label: 'A', value: 14},
+        {label: '2', value: 2},
+        {label: '3', value: 3},
+        {label: '4', value: 4},
+        {label: '5', value: 5},
+        {label: '6', value: 6},
+        {label: '7', value: 7},
+        {label: '8', value: 8},
+        {label: '9', value: 9},
+        {label: '10', value: 10},
+        {label: 'J', value: 11},
+        {label: 'Q', value: 12},
+        {label: 'K', value: 13}
+    ];
+    
+    // グリッドを作成（13列 × 4行）
+    // 各列は数字ごと、各行はスートごと
+    values.forEach((valueInfo, colIndex) => {
+        const column = document.createElement('div');
+        column.className = 'remaining-cards-column';
+        
+        // 列ヘッダー（数字）
+        const columnHeader = document.createElement('div');
+        columnHeader.className = 'remaining-cards-column-header';
+        columnHeader.textContent = valueInfo.label;
+        column.appendChild(columnHeader);
+        
+        // 各スートのカード
+        suits.forEach((suit) => {
+            const cardKey = `${suit}-${valueInfo.value}`;
+            const cardCell = document.createElement('div');
+            cardCell.className = 'remaining-cards-cell';
+            
+            if (remainingCardsMap.has(cardKey)) {
+                // 残りのカードに含まれている場合はカードを表示
+                const card = remainingCardsMap.get(cardKey);
+                const cardElement = createCardElementForRemaining(card);
+                cardCell.appendChild(cardElement);
+            } else {
+                // 自分の手札にある場合は空白
+                cardCell.className = 'remaining-cards-cell empty';
+            }
+            
+            column.appendChild(cardCell);
+        });
+        
+        remainingCardsList.appendChild(column);
     });
     
     remainingCardsArea.style.display = 'block';

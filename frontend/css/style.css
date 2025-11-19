@@ -338,27 +338,62 @@ header h1 {
 
 .remaining-cards-list {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    gap: 5px;
     justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.remaining-cards-column {
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    gap: 3px;
+}
+
+.remaining-cards-column-header {
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin-bottom: 2px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remaining-cards-cell {
+    width: 50px;
+    height: 75px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remaining-cards-cell.empty {
+    /* 空白セル */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
 }
 
 .remaining-cards-list .card {
-    width: 60px;
-    height: 90px;
-    font-size: 0.7rem;
+    width: 50px;
+    height: 75px;
+    font-size: 0.6rem;
     cursor: default;
     pointer-events: none;
     opacity: 0.9;
+    margin: 0;
 }
 
 .remaining-cards-list .card .card-label {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .remaining-cards-list .card .card-suit {
-    font-size: 1.2rem;
+    font-size: 1rem;
 }
 
 /* カード配布アニメーション（山札から飛び出す） */
