@@ -249,6 +249,84 @@ header h1 {
     color: #667eea;
 }
 
+/* 山札エリア */
+.deck-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    min-height: 200px;
+}
+
+.deck-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.deck {
+    position: relative;
+    width: 100px;
+    height: 150px;
+}
+
+.deck-card {
+    position: absolute;
+    width: 100px;
+    height: 150px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.deck-card:nth-child(1) {
+    transform: translate(0, 0);
+    z-index: 3;
+}
+
+.deck-card:nth-child(2) {
+    transform: translate(2px, 2px);
+    z-index: 2;
+    opacity: 0.8;
+}
+
+.deck-card:nth-child(3) {
+    transform: translate(4px, 4px);
+    z-index: 1;
+    opacity: 0.6;
+}
+
+.deck-label {
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* カード配布アニメーション（山札から飛び出す） */
+@keyframes cardDealFromDeck {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.8) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(var(--target-x), var(--target-y)) scale(1.1) rotate(180deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1) rotate(0deg);
+    }
+}
+
+.card.dealing {
+    animation: cardDealFromDeck 0.8s ease-out forwards;
+    position: absolute;
+    z-index: 1000;
+}
+
 /* 手札比較エリア */
 .hand-comparison {
     display: flex;
@@ -395,6 +473,9 @@ header h1 {
 /* カードバック */
 .card-back {
     background: linear-gradient(135deg, #667eea, #764ba2);
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+    animation: cardDealIn 0.5s ease-out forwards;
     cursor: default;
 }
 

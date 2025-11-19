@@ -73,15 +73,9 @@ function initializeSocket() {
         selectedCardIndices = []; // 選択をリセット
         gamePhase = 'draw_phase';
         showScreen('game-screen');
-        // カード配布時は「交換前」の場所に選択可能な初期手札を表示
-        renderPlayerCardsInBeforeContainer(); // 交換前の場所に選択可能なカードを表示
-        // 「交換後」の場所は空にする
-        const playerCardsContainer = document.getElementById('player-cards');
-        if (playerCardsContainer) {
-            playerCardsContainer.innerHTML = '';
-        }
-        enableExchangeButtons();
-        showStatus('カードが配られました。交換するカードを選んでください。', 'info');
+        
+        // 山札からカードを配るアニメーション
+        dealCardsFromDeck(data.hand);
     });
 
     // カード交換完了
@@ -469,6 +463,150 @@ function renderPlayerCardsBefore() {
         
         container.appendChild(cardDiv);
     });
+}
+
+/**
+ * 山札からカードを配るアニメーション
+ */
+function dealCardsFromDeck(hand) {
+    const sortedHand = sortHand(hand);
+    const deckElement = document.getElementById('deck');
+    const targetContainer = document.getElementById('player-cards-before');
+    
+    if (!deckElement || !targetContainer) {
+        // 要素が見つからない場合は通常の描画
+        renderPlayerCardsInBeforeContainer();
+        const playerCardsContainer = document.getElementById('player-cards');
+        if (playerCardsContainer) {
+            playerCardsContainer.innerHTML = '';
+        }
+        enableExchangeButtons();
+        showStatus('カードが配られました。交換するカードを選んでください。', 'info');
+        return;
+    }
+    
+    // コンテナをクリア
+    targetContainer.innerHTML = '';
+    const playerCardsContainer = document.getElementById('player-cards');
+    if (playerCardsContainer) {
+        playerCardsContainer.innerHTML = '';
+    }
+    
+    // 相手の手札もクリア
+    const opponentContainer = document.getElementById('opponent-cards');
+    if (opponentContainer) {
+        opponentContainer.innerHTML = '';
+    }
+    
+    // 各カードを順番に配る
+    sortedHand.forEach((card, index) => {
+        setTimeout(() => {
+            // 山札とターゲットの位置を再取得（スクロール対応）
+            const deckRect = deckElement.getBoundingClientRect();
+            const targetRect = targetContainer.getBoundingClientRect();
+            
+            // ターゲット位置を計算（山札の中心からターゲットの各カード位置へ）
+            const cardWidth = 100;
+            const cardGap = 10;
+            const totalWidth = sortedHand.length * cardWidth + (sortedHand.length - 1) * cardGap;
+            const startX = targetRect.left + targetRect.width / 2 - totalWidth / 2;
+            const cardX = startX + index * (cardWidth + cardGap) + cardWidth / 2;
+            const cardY = targetRect.top + targetRect.height / 2;
+            
+            const targetX = cardX - (deckRect.left + deckRect.width / 2);
+            const targetY = cardY - (deckRect.top + deckRect.height / 2);
+            
+            // 山札からカードを生成
+            const flyingCard = createCardElement(card, index);
+            flyingCard.style.position = 'fixed';
+            flyingCard.style.left = `${deckRect.left + deckRect.width / 2 - 50}px`;
+            flyingCard.style.top = `${deckRect.top + deckRect.height / 2 - 75}px`;
+            flyingCard.style.zIndex = '10000';
+            flyingCard.style.opacity = '0';
+            flyingCard.style.transform = 'scale(0.8) rotateY(180deg)';
+            flyingCard.style.pointerEvents = 'none';
+            document.body.appendChild(flyingCard);
+            
+            // アニメーション: 山札からターゲットへ移動
+            requestAnimationFrame(() => {
+                flyingCard.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                flyingCard.style.opacity = '1';
+                flyingCard.style.transform = `translate(${targetX}px, ${targetY}px) scale(1) rotateY(0deg)`;
+            });
+            
+            // アニメーション完了後に通常のカード表示に切り替え
+            setTimeout(() => {
+                flyingCard.remove();
+                
+                // 通常のカードを表示
+                const normalCard = createCardElement(card, index);
+                normalCard.style.animationDelay = '0s';
+                normalCard.style.opacity = '1';
+                normalCard.style.transform = 'scale(1)';
+                targetContainer.appendChild(normalCard);
+                
+                // 最後のカードが配られたら完了
+                if (index === sortedHand.length - 1) {
+                    setTimeout(() => {
+                        enableExchangeButtons();
+                        showStatus('カードが配られました。交換するカードを選んでください。', 'info');
+                    }, 100);
+                }
+            }, 600);
+        }, index * 150); // 各カードに150msの遅延
+    });
+    
+    // 相手の手札にもカードバックを配るアニメーション
+    if (opponentContainer) {
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                // 山札とターゲットの位置を再取得
+                const deckRect = deckElement.getBoundingClientRect();
+                const targetRect = opponentContainer.getBoundingClientRect();
+                
+                // ターゲット位置を計算
+                const cardWidth = 100;
+                const cardGap = 10;
+                const totalWidth = 5 * cardWidth + 4 * cardGap;
+                const startX = targetRect.left + targetRect.width / 2 - totalWidth / 2;
+                const cardX = startX + i * (cardWidth + cardGap) + cardWidth / 2;
+                const cardY = targetRect.top + targetRect.height / 2;
+                
+                const targetX = cardX - (deckRect.left + deckRect.width / 2);
+                const targetY = cardY - (deckRect.top + deckRect.height / 2);
+                
+                // 山札からカードバックを生成
+                const flyingCardBack = createCardBackElement();
+                flyingCardBack.style.position = 'fixed';
+                flyingCardBack.style.left = `${deckRect.left + deckRect.width / 2 - 50}px`;
+                flyingCardBack.style.top = `${deckRect.top + deckRect.height / 2 - 75}px`;
+                flyingCardBack.style.zIndex = '10000';
+                flyingCardBack.style.opacity = '0';
+                flyingCardBack.style.transform = 'scale(0.8) rotateY(180deg)';
+                flyingCardBack.style.pointerEvents = 'none';
+                document.body.appendChild(flyingCardBack);
+                
+                // アニメーション: 山札からターゲットへ移動
+                requestAnimationFrame(() => {
+                    flyingCardBack.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    flyingCardBack.style.opacity = '1';
+                    flyingCardBack.style.transform = `translate(${targetX}px, ${targetY}px) scale(1) rotateY(0deg)`;
+                });
+                
+                // アニメーション完了後に通常のカードバック表示に切り替え
+                setTimeout(() => {
+                    flyingCardBack.remove();
+                    
+                    // 通常のカードバックを表示
+                    const normalCardBack = createCardBackElement();
+                    normalCardBack.style.animationDelay = '0s';
+                    normalCardBack.style.opacity = '1';
+                    normalCardBack.style.transform = 'scale(1)';
+                    opponentContainer.appendChild(normalCardBack);
+                }, 600);
+            }, i * 150);
+        }
+    }
 }
 
 /**
