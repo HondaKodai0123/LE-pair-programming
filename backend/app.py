@@ -122,6 +122,29 @@ class GameRoom:
         else:
             return 'draw'
     
+    def get_remaining_cards_list(self):
+        """残りのカードリストを返す（全52枚から配布済みカードを除外）"""
+        # 全52枚のカードを取得
+        all_cards = self.deck.get_all_cards()
+        
+        # 各プレイヤーに配布されたカードを収集
+        dealt_cards = []
+        for player in self.players.values():
+            dealt_cards.extend(player['hand'])
+        
+        # 配布済みカードを除外
+        remaining = []
+        for card in all_cards:
+            # 同じカード（suitとvalueが一致）が配布済みカードに含まれているかチェック
+            is_dealt = any(
+                c['suit'] == card['suit'] and c['value'] == card['value']
+                for c in dealt_cards
+            )
+            if not is_dealt:
+                remaining.append(card)
+        
+        return remaining
+    
     def get_state(self):
         """ゲームの状態を返す"""
         return {
@@ -249,13 +272,17 @@ def handle_start_game(data):
     # カードを配る
     game.deal_cards()
     
+    # 残りのカードリストを取得
+    remaining_cards_list = game.get_remaining_cards_list()
+    remaining_cards_count = len(remaining_cards_list)
+    
     # 各プレイヤーに手札を送信
-    remaining_cards_count = game.deck.remaining_cards()
     for socket_id, player in game.players.items():
         socketio.emit('cards_dealt', {
             'hand': player['hand'],
             'game_state': game.get_state(),
-            'remaining_cards': remaining_cards_count
+            'remaining_cards': remaining_cards_count,
+            'remaining_cards_list': remaining_cards_list
         }, room=socket_id)
     
     print(f'Game started in room: {room_id}')
@@ -279,11 +306,13 @@ def handle_exchange_cards(data):
     
     # 交換後の手札を送信
     player = game.players[request.sid]
-    remaining_cards_count = game.deck.remaining_cards()
+    remaining_cards_list = game.get_remaining_cards_list()
+    remaining_cards_count = len(remaining_cards_list)
     emit('cards_exchanged', {
         'hand': player['hand'],
         'game_state': game.get_state(),
-        'remaining_cards': remaining_cards_count
+        'remaining_cards': remaining_cards_count,
+        'remaining_cards_list': remaining_cards_list
     })
     
     # 全員が交換を終えたら結果判定

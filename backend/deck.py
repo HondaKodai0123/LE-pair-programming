@@ -57,4 +57,16 @@ class Deck:
     def remaining_cards(self):
         """残りのカード枚数を返す"""
         return len(self.cards)
+    
+    def get_all_cards(self):
+        """全52枚のカードを生成して返す（シャッフルなし）"""
+        all_cards = []
+        for suit in self.SUITS:
+            for label in self.VALUES:
+                all_cards.append({
+                    'suit': suit,
+                    'label': label,
+                    'value': self.VALUE_MAP[label]
+                })
+        return all_cards
 

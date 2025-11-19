@@ -79,6 +79,11 @@ function initializeSocket() {
             updateRemainingCards(data.remaining_cards);
         }
         
+        // 残りのカードリストを表示
+        if (data.remaining_cards_list !== undefined) {
+            renderRemainingCards(data.remaining_cards_list);
+        }
+        
         // 山札からカードを配るアニメーション
         dealCardsFromDeck(data.hand);
     });
@@ -112,6 +117,11 @@ function initializeSocket() {
                     updateRemainingCards(data.remaining_cards);
                 }
                 
+                // 残りのカードリストを更新
+                if (data.remaining_cards_list !== undefined) {
+                    renderRemainingCards(data.remaining_cards_list);
+                }
+                
                 renderPlayerCardsWithAnimation(); // アニメーション付きで描画
                 renderPlayerCardsBefore(); // 交換前の手札を表示
                 disableExchangeButtons();
@@ -126,6 +136,11 @@ function initializeSocket() {
             // 残りのカード枚数を更新
             if (data.remaining_cards !== undefined) {
                 updateRemainingCards(data.remaining_cards);
+            }
+            
+            // 残りのカードリストを更新
+            if (data.remaining_cards_list !== undefined) {
+                renderRemainingCards(data.remaining_cards_list);
             }
             
             renderPlayerCards();
@@ -879,6 +894,60 @@ function updateRemainingCards(count) {
 }
 
 /**
+ * 残りのカードリストを表示
+ */
+function renderRemainingCards(cardsList) {
+    const remainingCardsArea = document.getElementById('remaining-cards-area');
+    const remainingCardsList = document.getElementById('remaining-cards-list');
+    
+    if (!remainingCardsArea || !remainingCardsList) {
+        return;
+    }
+    
+    // 既存のカードをクリア
+    remainingCardsList.innerHTML = '';
+    
+    if (!cardsList || cardsList.length === 0) {
+        remainingCardsArea.style.display = 'none';
+        return;
+    }
+    
+    // カードをソート（スート順、数字順）
+    const sortedCards = [...cardsList].sort((a, b) => {
+        const suitOrder = {'♠': 0, '♥': 1, '♦': 2, '♣': 3};
+        if (suitOrder[a.suit] !== suitOrder[b.suit]) {
+            return suitOrder[a.suit] - suitOrder[b.suit];
+        }
+        return a.value - b.value;
+    });
+    
+    // カードを表示
+    sortedCards.forEach((card) => {
+        const cardElement = createCardElementForRemaining(card);
+        remainingCardsList.appendChild(cardElement);
+    });
+    
+    remainingCardsArea.style.display = 'block';
+}
+
+/**
+ * 残りのカード表示用のカード要素を作成
+ */
+function createCardElementForRemaining(card) {
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'card';
+    
+    const suitColor = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+    
+    cardDiv.innerHTML = `
+        <div class="card-label ${suitColor}">${card.label}</div>
+        <div class="card-suit ${suitColor}">${card.suit}</div>
+    `;
+    
+    return cardDiv;
+}
+
+/**
  * ゲームをリセット
  */
 function resetGame() {
@@ -900,6 +969,10 @@ function resetGame() {
     const remainingCardsElement = document.getElementById('remaining-cards');
     if (remainingCardsElement) {
         remainingCardsElement.style.display = 'none';
+    }
+    const remainingCardsArea = document.getElementById('remaining-cards-area');
+    if (remainingCardsArea) {
+        remainingCardsArea.style.display = 'none';
     }
 }
 
