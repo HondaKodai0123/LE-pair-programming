@@ -68,13 +68,18 @@ function initializeSocket() {
     // カード配布
     socket.on('cards_dealt', (data) => {
         playerHand = sortHand(data.hand); // 自動並び替え
-        playerHandBeforeExchange = []; // 交換前の手札をクリア
+        playerHandBeforeExchange = [...playerHand]; // 初期手札を交換前の手札として保存
         selectedCardIds = []; // 選択をリセット
         selectedCardIndices = []; // 選択をリセット
         gamePhase = 'draw_phase';
         showScreen('game-screen');
-        renderPlayerCards();
-        renderPlayerCardsBefore(); // 交換前の手札を表示（初期状態では空）
+        // カード配布時は「交換前」の場所に選択可能な初期手札を表示
+        renderPlayerCardsInBeforeContainer(); // 交換前の場所に選択可能なカードを表示
+        // 「交換後」の場所は空にする
+        const playerCardsContainer = document.getElementById('player-cards');
+        if (playerCardsContainer) {
+            playerCardsContainer.innerHTML = '';
+        }
         enableExchangeButtons();
         showStatus('カードが配られました。交換するカードを選んでください。', 'info');
     });
@@ -169,11 +174,12 @@ function setupEventListeners() {
         console.log('選択中のカードID:', selectedCardIds);
         console.log('現在のplayerHand:', playerHand);
         
-        // 交換前の手札を保存
+        // 交換前の手札を保存（まだ保存されていない場合）
         if (playerHandBeforeExchange.length === 0) {
             playerHandBeforeExchange = [...playerHand];
-            renderPlayerCardsBefore(); // 交換前の手札を表示
         }
+        // 交換前の手札を選択不可の状態で表示
+        renderPlayerCardsBefore();
         
         const indices = getSelectedCardIndices();
         console.log('取得したインデックス:', indices);
@@ -415,6 +421,38 @@ function renderPlayerCardsBefore() {
         `;
         
         container.appendChild(cardDiv);
+    });
+}
+
+/**
+ * 交換前のコンテナに選択可能なカードを描画（カード配布時用）
+ */
+function renderPlayerCardsInBeforeContainer() {
+    const container = document.getElementById('player-cards-before');
+    if (!container) {
+        console.error('player-cards-before コンテナが見つかりません');
+        return;
+    }
+    container.innerHTML = '';
+    
+    console.log('renderPlayerCardsInBeforeContainer: playerHand =', playerHand);
+    
+    // 現在のplayerHandを「交換前」の場所に選択可能なカードとして表示
+    playerHand.forEach((card, index) => {
+        const cardElement = createCardElement(card, index);
+        // 選択状態を復元
+        const cardId = `${card.suit}-${card.value}`;
+        if (selectedCardIds.includes(cardId)) {
+            cardElement.classList.add('selected');
+            // インデックスも更新
+            const idIndex = selectedCardIds.indexOf(cardId);
+            if (idIndex !== -1 && idIndex < selectedCardIndices.length) {
+                selectedCardIndices[idIndex] = index;
+            } else if (idIndex !== -1) {
+                selectedCardIndices.push(index);
+            }
+        }
+        container.appendChild(cardElement);
     });
 }
 
