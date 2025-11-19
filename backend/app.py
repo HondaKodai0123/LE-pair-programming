@@ -250,10 +250,12 @@ def handle_start_game(data):
     game.deal_cards()
     
     # 各プレイヤーに手札を送信
+    remaining_cards_count = game.deck.remaining_cards()
     for socket_id, player in game.players.items():
         socketio.emit('cards_dealt', {
             'hand': player['hand'],
-            'game_state': game.get_state()
+            'game_state': game.get_state(),
+            'remaining_cards': remaining_cards_count
         }, room=socket_id)
     
     print(f'Game started in room: {room_id}')
@@ -277,9 +279,11 @@ def handle_exchange_cards(data):
     
     # 交換後の手札を送信
     player = game.players[request.sid]
+    remaining_cards_count = game.deck.remaining_cards()
     emit('cards_exchanged', {
         'hand': player['hand'],
-        'game_state': game.get_state()
+        'game_state': game.get_state(),
+        'remaining_cards': remaining_cards_count
     })
     
     # 全員が交換を終えたら結果判定

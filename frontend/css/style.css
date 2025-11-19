@@ -305,6 +305,19 @@ header h1 {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+.remaining-cards-label {
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    margin-top: 5px;
+}
+
+.remaining-cards-label #remaining-cards-count {
+    color: #ffd700;
+    font-size: 1.1rem;
+}
+
 /* カード配布アニメーション（山札から飛び出す） */
 @keyframes cardDealFromDeck {
     0% {

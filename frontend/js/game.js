@@ -74,6 +74,11 @@ function initializeSocket() {
         gamePhase = 'draw_phase';
         showScreen('game-screen');
         
+        // 残りのカード枚数を表示
+        if (data.remaining_cards !== undefined) {
+            updateRemainingCards(data.remaining_cards);
+        }
+        
         // 山札からカードを配るアニメーション
         dealCardsFromDeck(data.hand);
     });
@@ -101,6 +106,12 @@ function initializeSocket() {
                 console.log('並び替え後のplayerHand:', playerHand);
                 selectedCardIds = []; // 選択をリセット
                 selectedCardIndices = []; // 選択をリセット
+                
+                // 残りのカード枚数を更新
+                if (data.remaining_cards !== undefined) {
+                    updateRemainingCards(data.remaining_cards);
+                }
+                
                 renderPlayerCardsWithAnimation(); // アニメーション付きで描画
                 renderPlayerCardsBefore(); // 交換前の手札を表示
                 disableExchangeButtons();
@@ -111,6 +122,12 @@ function initializeSocket() {
             playerHand = sortHand(data.hand);
             selectedCardIds = [];
             selectedCardIndices = [];
+            
+            // 残りのカード枚数を更新
+            if (data.remaining_cards !== undefined) {
+                updateRemainingCards(data.remaining_cards);
+            }
+            
             renderPlayerCards();
             renderPlayerCardsBefore();
             disableExchangeButtons();
@@ -849,6 +866,19 @@ function showStatus(message, type = 'info') {
 }
 
 /**
+ * 残りのカード枚数を更新
+ */
+function updateRemainingCards(count) {
+    const remainingCardsElement = document.getElementById('remaining-cards');
+    const remainingCardsCountElement = document.getElementById('remaining-cards-count');
+    
+    if (remainingCardsElement && remainingCardsCountElement) {
+        remainingCardsCountElement.textContent = count;
+        remainingCardsElement.style.display = 'block';
+    }
+}
+
+/**
  * ゲームをリセット
  */
 function resetGame() {
@@ -865,6 +895,11 @@ function resetGame() {
     const playerCardsBeforeContainer = document.getElementById('player-cards-before');
     if (playerCardsBeforeContainer) {
         playerCardsBeforeContainer.innerHTML = '';
+    }
+    // 残りのカード表示をリセット
+    const remainingCardsElement = document.getElementById('remaining-cards');
+    if (remainingCardsElement) {
+        remainingCardsElement.style.display = 'none';
     }
 }
 
