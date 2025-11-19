@@ -652,14 +652,48 @@ header h1 {
 
 .result-status.win {
     color: #28a745;
+    animation: winAnimation 1s ease-in-out infinite;
 }
 
 .result-status.lose {
     color: #dc3545;
+    animation: loseAnimation 1s ease-in-out infinite;
 }
 
 .result-status.draw {
     color: #ffc107;
+}
+
+/* 勝ちのアニメーション（元気なイメージ） */
+@keyframes winAnimation {
+    0%, 100% {
+        transform: rotate(15deg) scale(1) translateY(0);
+    }
+    25% {
+        transform: rotate(20deg) scale(1.1) translateY(-10px);
+    }
+    50% {
+        transform: rotate(10deg) scale(1.15) translateY(-15px);
+    }
+    75% {
+        transform: rotate(20deg) scale(1.1) translateY(-10px);
+    }
+}
+
+/* 負けのアニメーション（残念なイメージ） */
+@keyframes loseAnimation {
+    0%, 100% {
+        transform: rotate(15deg) scale(1) translateX(0);
+    }
+    25% {
+        transform: rotate(10deg) scale(0.95) translateX(-5px);
+    }
+    50% {
+        transform: rotate(20deg) scale(0.9) translateX(5px);
+    }
+    75% {
+        transform: rotate(10deg) scale(0.95) translateX(-5px);
+    }
 }
 
 .hand-name {
