@@ -642,9 +642,9 @@ header h1 {
     font-weight: bold;
     position: absolute;
     left: 120px;
-    top: -15px;
+    top: -25px;
     transform: rotate(15deg);
-    transform-origin: left center;
+    transform-origin: left top;
     display: inline-block;
     white-space: nowrap;
 }
