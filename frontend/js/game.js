@@ -256,6 +256,27 @@ function setupEventListeners() {
         selectedCardIndices = [];
     });
 
+    // 全て交換
+    document.getElementById('exchange-all-btn').addEventListener('click', () => {
+        // 交換前の手札を保存（まだ保存されていない場合）
+        if (playerHandBeforeExchange.length === 0) {
+            playerHandBeforeExchange = [...playerHand];
+        }
+        // 交換前の手札を選択不可の状態で表示
+        renderPlayerCardsBefore();
+        
+        // 全てのカードのインデックス（0, 1, 2, 3, 4）
+        const allIndices = playerHand.map((_, index) => index);
+        
+        socket.emit('exchange_cards', {
+            room_id: currentRoomId,
+            card_indices: allIndices
+        });
+        
+        selectedCardIds = [];
+        selectedCardIndices = [];
+    });
+
     // 交換しない
     document.getElementById('skip-exchange-btn').addEventListener('click', () => {
         socket.emit('exchange_cards', {
@@ -810,6 +831,7 @@ function getSelectedCardIndices() {
  */
 function enableExchangeButtons() {
     document.getElementById('exchange-btn').disabled = false;
+    document.getElementById('exchange-all-btn').disabled = false;
     document.getElementById('skip-exchange-btn').disabled = false;
 }
 
@@ -818,6 +840,7 @@ function enableExchangeButtons() {
  */
 function disableExchangeButtons() {
     document.getElementById('exchange-btn').disabled = true;
+    document.getElementById('exchange-all-btn').disabled = true;
     document.getElementById('skip-exchange-btn').disabled = true;
 }
 

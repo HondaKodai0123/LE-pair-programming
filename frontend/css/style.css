@@ -118,13 +118,24 @@ header h1 {
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
+.btn-warning {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+}
+
 .btn-secondary {
-    background: #6c757d;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
     color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
 }
 
 .btn-success {
