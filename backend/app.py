@@ -122,25 +122,34 @@ class GameRoom:
         else:
             return 'draw'
     
-    def get_remaining_cards_list(self):
-        """残りのカードリストを返す（全52枚から配布済みカードを除外）"""
+    def get_remaining_cards_list(self, socket_id=None):
+        """
+        残りのカードリストを返す（自分の手札以外の47枚）
+        
+        Args:
+            socket_id: プレイヤーのsocket_id。指定された場合、そのプレイヤーの手札を除外する
+        
+        Returns:
+            list: 自分の手札以外のカードリスト（相手の手札 + 山札）
+        """
         # 全52枚のカードを取得
         all_cards = self.deck.get_all_cards()
         
-        # 各プレイヤーに配布されたカードを収集
-        dealt_cards = []
-        for player in self.players.values():
-            dealt_cards.extend(player['hand'])
+        # 指定されたプレイヤーの手札を取得（自分の手札）
+        if socket_id and socket_id in self.players:
+            my_hand = self.players[socket_id]['hand']
+        else:
+            my_hand = []
         
-        # 配布済みカードを除外
+        # 自分の手札を除外
         remaining = []
         for card in all_cards:
-            # 同じカード（suitとvalueが一致）が配布済みカードに含まれているかチェック
-            is_dealt = any(
+            # 同じカード（suitとvalueが一致）が自分の手札に含まれているかチェック
+            is_in_my_hand = any(
                 c['suit'] == card['suit'] and c['value'] == card['value']
-                for c in dealt_cards
+                for c in my_hand
             )
-            if not is_dealt:
+            if not is_in_my_hand:
                 remaining.append(card)
         
         return remaining
@@ -272,12 +281,12 @@ def handle_start_game(data):
     # カードを配る
     game.deal_cards()
     
-    # 残りのカードリストを取得
-    remaining_cards_list = game.get_remaining_cards_list()
-    remaining_cards_count = len(remaining_cards_list)
-    
-    # 各プレイヤーに手札を送信
+    # 各プレイヤーに手札を送信（各プレイヤーに対して自分の手札以外のカードを送信）
     for socket_id, player in game.players.items():
+        # このプレイヤーの手札以外のカードリストを取得
+        remaining_cards_list = game.get_remaining_cards_list(socket_id)
+        remaining_cards_count = len(remaining_cards_list)
+        
         socketio.emit('cards_dealt', {
             'hand': player['hand'],
             'game_state': game.get_state(),
@@ -306,7 +315,8 @@ def handle_exchange_cards(data):
     
     # 交換後の手札を送信
     player = game.players[request.sid]
-    remaining_cards_list = game.get_remaining_cards_list()
+    # このプレイヤーの手札以外のカードリストを取得
+    remaining_cards_list = game.get_remaining_cards_list(request.sid)
     remaining_cards_count = len(remaining_cards_list)
     emit('cards_exchanged', {
         'hand': player['hand'],
