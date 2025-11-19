@@ -855,17 +855,22 @@ function disableExchangeButtons() {
 function showResultScreen(data) {
     showScreen('result-screen');
     
-    // 勝敗を表示
+    // ゲーム結果タイトルは固定
     const resultTitle = document.getElementById('result-title');
+    resultTitle.textContent = 'ゲーム結果';
+    resultTitle.className = '';
+    
+    // 勝敗を「あなたの手札」の右側に表示
+    const yourResultStatus = document.getElementById('your-result-status');
     if (data.winner === 'you') {
-        resultTitle.textContent = '🎉 あなたの勝ち！';
-        resultTitle.className = 'win';
+        yourResultStatus.textContent = '🎉 あなたの勝ち！';
+        yourResultStatus.className = 'result-status win';
     } else if (data.winner === 'opponent') {
-        resultTitle.textContent = '😢 あなたの負け';
-        resultTitle.className = 'lose';
+        yourResultStatus.textContent = '😢 あなたの負け';
+        yourResultStatus.className = 'result-status lose';
     } else {
-        resultTitle.textContent = '🤝 引き分け';
-        resultTitle.className = 'draw';
+        yourResultStatus.textContent = '🤝 引き分け';
+        yourResultStatus.className = 'result-status draw';
     }
     
     // あなたの手札

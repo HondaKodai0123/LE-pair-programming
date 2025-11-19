@@ -634,6 +634,30 @@ header h1 {
 .result-section h3 {
     margin-bottom: 10px;
     color: #667eea;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.result-status {
+    font-size: 1.2rem;
+    font-weight: bold;
+    transform: rotate(-15deg);
+    transform-origin: left center;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.result-status.win {
+    color: #28a745;
+}
+
+.result-status.lose {
+    color: #dc3545;
+}
+
+.result-status.draw {
+    color: #ffc107;
 }
 
 .hand-name {
