@@ -652,59 +652,43 @@ header h1 {
 
 .result-status.win {
     color: #28a745;
-    animation: winCelebration 1.5s ease-in-out infinite;
+    animation: winGlow 2s ease-in-out infinite;
 }
 
 .result-status.lose {
     color: #dc3545;
-    animation: loseDisappointment 1.5s ease-in-out infinite;
+    animation: loseDarken 2s ease-in-out infinite;
 }
 
 .result-status.draw {
     color: #ffc107;
 }
 
-/* 勝ちのアニメーション（元気なイメージ：拡大縮小、回転、光る効果、浮き上がる） */
-@keyframes winCelebration {
+/* 勝ちのアニメーション（文字が光る演出） */
+@keyframes winGlow {
     0%, 100% {
-        transform: rotate(15deg) scale(1) translateY(0);
-        text-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
-    }
-    25% {
-        transform: rotate(18deg) scale(1.15) translateY(-8px);
-        text-shadow: 0 0 20px rgba(40, 167, 69, 0.8), 0 0 30px rgba(40, 167, 69, 0.6);
+        text-shadow: 0 0 10px rgba(40, 167, 69, 0.5), 0 0 20px rgba(40, 167, 69, 0.3);
+        filter: brightness(1);
     }
     50% {
-        transform: rotate(12deg) scale(1.2) translateY(-12px);
-        text-shadow: 0 0 25px rgba(40, 167, 69, 1), 0 0 40px rgba(40, 167, 69, 0.8);
-    }
-    75% {
-        transform: rotate(18deg) scale(1.15) translateY(-8px);
-        text-shadow: 0 0 20px rgba(40, 167, 69, 0.8), 0 0 30px rgba(40, 167, 69, 0.6);
+        text-shadow: 0 0 20px rgba(40, 167, 69, 1), 0 0 30px rgba(40, 167, 69, 0.8), 0 0 40px rgba(40, 167, 69, 0.6);
+        filter: brightness(1.3);
     }
 }
 
-/* 負けのアニメーション（残念なイメージ：左右に揺れる、色が暗くなる、沈む） */
-@keyframes loseDisappointment {
-    0%, 100% {
-        transform: rotate(15deg) scale(1) translateX(0) translateY(0);
+/* 負けのアニメーション（だんだんと暗くなっていく演出） */
+@keyframes loseDarken {
+    0% {
         opacity: 1;
         filter: brightness(1);
     }
-    25% {
-        transform: rotate(12deg) scale(0.95) translateX(-8px) translateY(5px);
-        opacity: 0.7;
-        filter: brightness(0.7);
-    }
     50% {
-        transform: rotate(18deg) scale(0.9) translateX(8px) translateY(10px);
-        opacity: 0.5;
-        filter: brightness(0.5);
+        opacity: 0.4;
+        filter: brightness(0.4);
     }
-    75% {
-        transform: rotate(12deg) scale(0.95) translateX(-8px) translateY(5px);
-        opacity: 0.7;
-        filter: brightness(0.7);
+    100% {
+        opacity: 1;
+        filter: brightness(1);
     }
 }
 
