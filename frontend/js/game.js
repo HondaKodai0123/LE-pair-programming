@@ -155,6 +155,11 @@ function initializeSocket() {
         showStatus('相手の交換を待っています...', 'info');
     });
 
+    // 全員の交換完了
+    socket.on('all_players_ready', (data) => {
+        showStatus(data.message || '全員の交換が完了しました。結果を表示します...', 'info');
+    });
+
     // ゲーム結果
     socket.on('game_result', (data) => {
         gamePhase = 'result';

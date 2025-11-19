@@ -325,20 +325,30 @@ def handle_exchange_cards(data):
         'remaining_cards_list': remaining_cards_list
     })
     
-    # 全員が交換を終えたら結果判定
+    # 全員が交換を終えたら結果判定（少し待ってから結果を送信）
     if game.all_players_ready():
-        game.evaluate_hands()
-        winner_id = game.determine_winner()
+        # 全員が交換を終えたことを通知
+        socketio.emit('all_players_ready', {'message': '全員の交換が完了しました。結果を表示します...'}, room=room_id)
         
-        # 各プレイヤーに結果を送信
-        for socket_id in game.players:
-            result_data = {
-                'your_result': game.results[socket_id],
-                'opponent_result': game.results[[sid for sid in game.players.keys() if sid != socket_id][0]],
-                'winner': 'you' if winner_id == socket_id else ('opponent' if winner_id != 'draw' else 'draw'),
-                'game_state': game.get_state()
-            }
-            socketio.emit('game_result', result_data, room=socket_id)
+        # バックグラウンドタスクで待機してから結果を送信
+        def send_result_after_delay():
+            import time
+            time.sleep(3)  # 3秒待機してから結果を送信
+            
+            game.evaluate_hands()
+            winner_id = game.determine_winner()
+            
+            # 各プレイヤーに結果を送信
+            for socket_id in game.players:
+                result_data = {
+                    'your_result': game.results[socket_id],
+                    'opponent_result': game.results[[sid for sid in game.players.keys() if sid != socket_id][0]],
+                    'winner': 'you' if winner_id == socket_id else ('opponent' if winner_id != 'draw' else 'draw'),
+                    'game_state': game.get_state()
+                }
+                socketio.emit('game_result', result_data, room=socket_id)
+        
+        socketio.start_background_task(send_result_after_delay)
     else:
         # 相手が交換中であることを通知
         socketio.emit('waiting_for_opponent', game.get_state(), room=room_id)
