@@ -638,11 +638,11 @@ header h1 {
 }
 
 .result-status {
-    font-size: 1.2rem;
+    font-size: 2rem;
     font-weight: bold;
     position: absolute;
     left: 120px;
-    top: 0;
+    top: -15px;
     transform: rotate(15deg);
     transform-origin: left center;
     display: inline-block;
