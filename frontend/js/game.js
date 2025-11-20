@@ -18,6 +18,12 @@ const SERVER_URL = window.location.origin;
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
+    // 既存のlocalStorageの戦績をリセット（サーバー側管理に移行）
+    if (localStorage.getItem('poker_player_stats')) {
+        console.log('既存のlocalStorageの戦績をリセットします（サーバー側管理に移行）');
+        localStorage.removeItem('poker_player_stats');
+    }
+    
     initializeSocket();
     setupEventListeners();
     loadPlayerNames();
@@ -201,6 +207,39 @@ function initializeSocket() {
     socket.on('disconnect', () => {
         showStatus('サーバーから切断されました', 'error');
     });
+
+    // 戦績取得レスポンス
+    socket.on('stats_response', (data) => {
+        console.log('戦績を取得:', data);
+        cachedStats[data.player_name] = data.stats;
+        // 統計モーダルが表示されている場合は更新
+        if (document.getElementById('stats-modal')?.style.display === 'block') {
+            showStatsModal();
+        }
+    });
+
+    // 全戦績取得レスポンス
+    socket.on('all_stats_response', (data) => {
+        console.log('全戦績を取得:', data);
+        cachedAllStats = data.stats || {};
+        // 統計モーダルが表示されている場合は更新
+        if (document.getElementById('stats-modal')?.style.display === 'block') {
+            showStatsModal();
+        }
+    });
+
+    // 戦績リセットレスポンス
+    socket.on('stats_reset_response', (data) => {
+        console.log('戦績をリセット:', data);
+        showStatus(data.message, 'success');
+        // キャッシュをクリア
+        cachedStats = {};
+        cachedAllStats = {};
+        // 統計モーダルが表示されている場合は更新
+        if (document.getElementById('stats-modal')?.style.display === 'block') {
+            showStatsModal();
+        }
+    });
 }
 
 /**
@@ -366,6 +405,18 @@ function setupEventListeners() {
     document.getElementById('stats-modal').addEventListener('click', (e) => {
         if (e.target.id === 'stats-modal') {
             closeStatsModal();
+        }
+    });
+
+    // 戦績リセットボタン
+    document.getElementById('reset-stats-btn').addEventListener('click', () => {
+        if (confirm('戦績をリセットしますか？この操作は取り消せません。')) {
+            // サーバー側の戦績をリセット
+            socket.emit('reset_stats', { player_name: currentPlayerName });
+            // ローカルストレージの戦績もリセット
+            localStorage.removeItem('poker_player_stats');
+            cachedStats = {};
+            cachedAllStats = {};
         }
     });
 }
@@ -965,9 +1016,8 @@ function showResultScreen(data) {
     });
     document.getElementById('opponent-hand-name').textContent = data.opponent_result.hand_result.hand_name;
     
-    // 統計情報を更新
-    // サーバーから返されたプレイヤー名を優先的に使用（確実に統計を記録するため）
-    // 複数のソースからプレイヤー名を取得を試みる
+    // 統計情報を更新（サーバー側で自動的に更新されるため、クライアント側では更新しない）
+    // プレイヤー名を更新
     const playerNameForStats = data.player_name || data.your_result?.player_name || currentPlayerName || localStorage.getItem('last_player_name') || '';
     console.log('ゲーム結果受信:', {
         'data.player_name': data.player_name,
@@ -989,9 +1039,12 @@ function showResultScreen(data) {
             localStorage.setItem('last_player_name', data.your_result.player_name);
             console.log('currentPlayerNameを更新（your_resultから）:', currentPlayerName);
         }
-        updatePlayerStats(playerNameForStats, data);
+        
+        // サーバー側で戦績が自動更新されるため、クライアント側では更新しない
+        // 戦績をサーバーから取得して表示を更新
+        loadPlayerStatsFromServer(playerNameForStats);
     } else {
-        console.error('統計情報を更新できません: プレイヤー名が取得できませんでした', { 
+        console.error('プレイヤー名が取得できませんでした', { 
             data, 
             currentPlayerName,
             'data.player_name': data.player_name,
@@ -1088,81 +1141,43 @@ function loadPlayerNames() {
 }
 
 /**
- * プレイヤーの統計情報を更新
+ * サーバーからプレイヤーの統計情報を取得
  */
-function updatePlayerStats(playerName, gameResult) {
-    try {
-        console.log('=== 統計情報更新開始 ===');
-        console.log('プレイヤー名:', playerName);
-        console.log('勝敗:', gameResult.winner);
-        console.log('手札:', gameResult.your_result.hand_result.hand_name);
-        
-        const stats = getPlayerStats(playerName);
-        console.log('更新前の統計:', JSON.parse(JSON.stringify(stats)));
-        
-        // 対戦数を増やす
-        const beforeTotalGames = stats.totalGames || 0;
-        stats.totalGames = beforeTotalGames + 1;
-        console.log('対戦数:', beforeTotalGames, '→', stats.totalGames);
-        
-        // 勝敗を更新
-        const beforeWins = stats.wins || 0;
-        const beforeLosses = stats.losses || 0;
-        const beforeDraws = stats.draws || 0;
-        
-        if (gameResult.winner === 'you') {
-            stats.wins = beforeWins + 1;
-            console.log('勝利数:', beforeWins, '→', stats.wins);
-        } else if (gameResult.winner === 'opponent') {
-            stats.losses = beforeLosses + 1;
-            console.log('敗北数:', beforeLosses, '→', stats.losses);
-        } else {
-            stats.draws = beforeDraws + 1;
-            console.log('引き分け数:', beforeDraws, '→', stats.draws);
-        }
-        
-        // 出した役を記録
-        const handName = gameResult.your_result.hand_result.hand_name;
-        if (!stats.hands) {
-            stats.hands = {};
-        }
-        const beforeHandCount = stats.hands[handName] || 0;
-        stats.hands[handName] = beforeHandCount + 1;
-        console.log('役「' + handName + '」:', beforeHandCount, '→', stats.hands[handName]);
-        
-        // ローカルストレージに保存
-        const allStats = getAllPlayerStats();
-        console.log('保存前の全統計:', Object.keys(allStats));
-        allStats[playerName] = stats;
-        localStorage.setItem('poker_player_stats', JSON.stringify(allStats));
-        
-        // 保存後の確認
-        const savedStats = getPlayerStats(playerName);
-        console.log('保存後の統計:', JSON.parse(JSON.stringify(savedStats)));
-        console.log('=== 統計情報更新完了 ===');
-    } catch (e) {
-        console.error('統計情報更新エラー:', e);
-        console.error('エラー詳細:', e.stack);
+function loadPlayerStatsFromServer(playerName) {
+    if (!playerName) {
+        console.warn('プレイヤー名が指定されていません');
+        return;
     }
+    
+    console.log('サーバーから戦績を取得:', playerName);
+    socket.emit('get_stats', { player_name: playerName });
 }
 
 /**
- * プレイヤーの統計情報を取得
+ * サーバーから全プレイヤーの統計情報を取得
+ */
+function loadAllStatsFromServer() {
+    console.log('サーバーから全戦績を取得');
+    socket.emit('get_all_stats');
+}
+
+/**
+ * プレイヤーの統計情報を更新（サーバー側で自動更新されるため、この関数は使用しない）
+ * @deprecated サーバー側で自動更新されるため、この関数は使用しません
+ */
+function updatePlayerStats(playerName, gameResult) {
+    console.warn('updatePlayerStatsは非推奨です。サーバー側で自動更新されます。');
+}
+
+// サーバーから取得した戦績をキャッシュ
+let cachedStats = {};
+let cachedAllStats = {};
+
+/**
+ * プレイヤーの統計情報を取得（キャッシュから）
  */
 function getPlayerStats(playerName) {
-    try {
-        const allStats = getAllPlayerStats();
-        const stats = allStats[playerName] || {
-            totalGames: 0,
-            wins: 0,
-            losses: 0,
-            draws: 0,
-            hands: {}
-        };
-        console.log('統計情報を取得:', { playerName, stats: JSON.parse(JSON.stringify(stats)) });
-        return stats;
-    } catch (e) {
-        console.error('Failed to get player stats:', e);
+    if (!playerName) {
         return {
             totalGames: 0,
             wins: 0,
@@ -1171,23 +1186,25 @@ function getPlayerStats(playerName) {
             hands: {}
         };
     }
+    
+    // キャッシュから取得
+    const stats = cachedStats[playerName] || cachedAllStats[playerName] || {
+        totalGames: 0,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        hands: {}
+    };
+    
+    console.log('統計情報を取得（キャッシュ）:', { playerName, stats: JSON.parse(JSON.stringify(stats)) });
+    return stats;
 }
 
 /**
- * 全プレイヤーの統計情報を取得
+ * 全プレイヤーの統計情報を取得（キャッシュから）
  */
 function getAllPlayerStats() {
-    try {
-        const saved = localStorage.getItem('poker_player_stats');
-        if (saved) {
-            const stats = JSON.parse(saved);
-            console.log('全統計情報を取得:', Object.keys(stats));
-            return stats;
-        }
-    } catch (e) {
-        console.error('Failed to get all player stats:', e);
-    }
-    return {};
+    return cachedAllStats;
 }
 
 /**
@@ -1199,6 +1216,10 @@ function showStatsModal() {
     const noStatsMessage = document.getElementById('no-stats-message');
     
     if (currentPlayerName) {
+        // サーバーから最新の戦績を取得
+        loadPlayerStatsFromServer(currentPlayerName);
+        
+        // キャッシュから統計情報を取得（サーバーからのレスポンスで更新される）
         const stats = getPlayerStats(currentPlayerName);
         
         if (stats.totalGames > 0) {

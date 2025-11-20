@@ -8,6 +8,7 @@ import os
 from deck import Deck
 from game_logic import PokerHand
 from hand_sorter import sort_hand
+from stats_manager import update_player_stats, get_player_stats, get_all_stats, reset_all_stats, reset_player_stats
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -340,7 +341,7 @@ def handle_exchange_cards(data):
             game.evaluate_hands()
             winner_id = game.determine_winner()
             
-            # 各プレイヤーに結果を送信
+            # 各プレイヤーに結果を送信し、戦績を更新
             for socket_id in game.players:
                 player = game.players[socket_id]
                 winner_status = 'you' if winner_id == socket_id else ('opponent' if winner_id != 'draw' else 'draw')
@@ -351,6 +352,14 @@ def handle_exchange_cards(data):
                     'game_state': game.get_state(),
                     'player_name': player['name']  # プレイヤー名を含める
                 }
+                
+                # サーバー側で戦績を更新
+                try:
+                    updated_stats = update_player_stats(player['name'], result_data)
+                    print(f'戦績を更新: player_name={player["name"]}, stats={updated_stats}')
+                except Exception as e:
+                    print(f'戦績更新エラー: player_name={player["name"]}, error={e}')
+                
                 print(f'ゲーム結果を送信: socket_id={socket_id}, player_name={player["name"]}, winner={winner_status}')
                 socketio.emit('game_result', result_data, room=socket_id)
         
@@ -379,6 +388,70 @@ def handle_reset_game(data):
     
     socketio.emit('game_reset', game.get_state(), room=room_id)
     print(f'Game reset in room: {room_id}')
+
+
+@socketio.on('get_stats')
+def handle_get_stats(data):
+    """プレイヤーの戦績を取得"""
+    player_name = data.get('player_name')
+    
+    if not player_name:
+        emit('error', {'message': 'プレイヤー名が指定されていません'})
+        return
+    
+    try:
+        stats = get_player_stats(player_name)
+        emit('stats_response', {
+            'player_name': player_name,
+            'stats': stats
+        })
+        print(f'戦績を取得: player_name={player_name}')
+    except Exception as e:
+        emit('error', {'message': f'戦績の取得に失敗しました: {str(e)}'})
+        print(f'戦績取得エラー: player_name={player_name}, error={e}')
+
+
+@socketio.on('get_all_stats')
+def handle_get_all_stats():
+    """全プレイヤーの戦績を取得"""
+    try:
+        all_stats = get_all_stats()
+        emit('all_stats_response', {
+            'stats': all_stats
+        })
+        print('全戦績を取得')
+    except Exception as e:
+        emit('error', {'message': f'戦績の取得に失敗しました: {str(e)}'})
+        print(f'全戦績取得エラー: error={e}')
+
+
+@socketio.on('reset_stats')
+def handle_reset_stats(data):
+    """戦績をリセット（管理者用）"""
+    player_name = data.get('player_name')
+    
+    try:
+        if player_name:
+            # 特定プレイヤーの戦績をリセット
+            success = reset_player_stats(player_name)
+            if success:
+                emit('stats_reset_response', {
+                    'message': f'プレイヤー {player_name} の戦績をリセットしました',
+                    'player_name': player_name
+                })
+                print(f'戦績をリセット: player_name={player_name}')
+            else:
+                emit('error', {'message': f'プレイヤー {player_name} の戦績が見つかりませんでした'})
+        else:
+            # 全プレイヤーの戦績をリセット
+            reset_all_stats()
+            emit('stats_reset_response', {
+                'message': '全プレイヤーの戦績をリセットしました'
+            })
+            print('全戦績をリセット')
+    except Exception as e:
+        emit('error', {'message': f'戦績のリセットに失敗しました: {str(e)}'})
+        print(f'戦績リセットエラー: error={e}')
 
 
 if __name__ == '__main__':
