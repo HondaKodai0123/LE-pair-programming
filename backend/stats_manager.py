@@ -7,8 +7,9 @@ import os
 from datetime import datetime
 from threading import Lock
 
-# 戦績データの保存先
-STATS_FILE = 'player_stats.json'
+# 戦績データの保存先（backendディレクトリに保存）
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATS_FILE = os.path.join(BASE_DIR, 'player_stats.json')
 # ファイルアクセスの排他制御用ロック
 stats_lock = Lock()
 
@@ -27,7 +28,13 @@ def load_stats():
         try:
             with open(STATS_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except (json.JSONDecodeError, FileNotFoundError):
+        except (json.JSONDecodeError, FileNotFoundError) as e:
+            print(f'戦績データ読み込みエラー: {e}, file={STATS_FILE}')
+            return {}
+        except Exception as e:
+            print(f'戦績データ読み込み予期しないエラー: {e}, file={STATS_FILE}')
+            import traceback
+            traceback.print_exc()
             return {}
 
 
@@ -35,8 +42,14 @@ def save_stats(stats):
     """戦績データを保存"""
     ensure_stats_file()
     with stats_lock:
-        with open(STATS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(stats, f, ensure_ascii=False, indent=2)
+        try:
+            with open(STATS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(stats, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f'戦績データ保存エラー: {e}, file={STATS_FILE}')
+            import traceback
+            traceback.print_exc()
+            raise
 
 
 def get_player_stats(player_name):

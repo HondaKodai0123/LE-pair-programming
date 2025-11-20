@@ -393,36 +393,45 @@ def handle_reset_game(data):
 @socketio.on('get_stats')
 def handle_get_stats(data):
     """プレイヤーの戦績を取得"""
-    player_name = data.get('player_name')
-    
-    if not player_name:
-        emit('error', {'message': 'プレイヤー名が指定されていません'})
-        return
-    
     try:
+        player_name = data.get('player_name')
+        
+        if not player_name:
+            emit('error', {'message': 'プレイヤー名が指定されていません'})
+            print('戦績取得エラー: プレイヤー名が指定されていません')
+            return
+        
+        print(f'戦績取得リクエスト: player_name={player_name}')
         stats = get_player_stats(player_name)
         emit('stats_response', {
             'player_name': player_name,
             'stats': stats
         })
-        print(f'戦績を取得: player_name={player_name}')
+        print(f'戦績を取得: player_name={player_name}, stats={stats}')
     except Exception as e:
-        emit('error', {'message': f'戦績の取得に失敗しました: {str(e)}'})
-        print(f'戦績取得エラー: player_name={player_name}, error={e}')
+        error_msg = f'戦績の取得に失敗しました: {str(e)}'
+        emit('error', {'message': error_msg})
+        print(f'戦績取得エラー: player_name={data.get("player_name", "unknown")}, error={e}')
+        import traceback
+        traceback.print_exc()
 
 
 @socketio.on('get_all_stats')
 def handle_get_all_stats():
     """全プレイヤーの戦績を取得"""
     try:
+        print('全戦績取得リクエスト')
         all_stats = get_all_stats()
         emit('all_stats_response', {
             'stats': all_stats
         })
-        print('全戦績を取得')
+        print(f'全戦績を取得: {len(all_stats)} players')
     except Exception as e:
-        emit('error', {'message': f'戦績の取得に失敗しました: {str(e)}'})
+        error_msg = f'戦績の取得に失敗しました: {str(e)}'
+        emit('error', {'message': error_msg})
         print(f'全戦績取得エラー: error={e}')
+        import traceback
+        traceback.print_exc()
 
 
 @socketio.on('reset_stats')

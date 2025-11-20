@@ -200,7 +200,8 @@ function initializeSocket() {
 
     // エラー
     socket.on('error', (data) => {
-        showStatus(data.message, 'error');
+        console.error('サーバーエラー:', data);
+        showStatus(data.message || 'エラーが発生しました', 'error');
     });
 
     // 切断
@@ -1150,7 +1151,12 @@ function loadPlayerStatsFromServer(playerName) {
     }
     
     console.log('サーバーから戦績を取得:', playerName);
-    socket.emit('get_stats', { player_name: playerName });
+    try {
+        socket.emit('get_stats', { player_name: playerName });
+    } catch (e) {
+        console.error('戦績取得リクエスト送信エラー:', e);
+        showStatus('戦績の取得に失敗しました', 'error');
+    }
 }
 
 /**
