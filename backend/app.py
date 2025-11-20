@@ -33,6 +33,10 @@ class GameRoom:
         self.phase = 'waiting'  # waiting, dealing, draw_phase, result
         self.current_turn = None
         self.results = {}
+        self.max_exchanges = None  # 最大交換回数（1, 2, 3のいずれか）
+        self.current_exchange_round = 0  # 現在の交換ラウンド（0から開始）
+        self.exchange_count = {}  # {socket_id: 交換回数}
+        self.creator_socket_id = None  # ルーム作成者のsocket_id
     
     def add_player(self, socket_id, player_name):
         """プレイヤーを追加"""
@@ -88,6 +92,28 @@ class GameRoom:
         
         player['ready'] = True
         return True
+    
+    def set_max_exchanges(self, max_exchanges):
+        """最大交換回数を設定"""
+        if max_exchanges in [1, 2, 3]:
+            self.max_exchanges = max_exchanges
+            self.current_exchange_round = 0
+            self.exchange_count = {socket_id: 0 for socket_id in self.players}
+            return True
+        return False
+    
+    def increment_exchange_round(self):
+        """交換ラウンドを増やす"""
+        self.current_exchange_round += 1
+        # 全てのプレイヤーのready状態をリセット
+        for player in self.players.values():
+            player['ready'] = False
+        # 交換回数をリセット
+        self.exchange_count = {socket_id: 0 for socket_id in self.players}
+    
+    def is_exchange_rounds_complete(self):
+        """全ての交換ラウンドが完了したか"""
+        return self.max_exchanges is not None and self.current_exchange_round >= self.max_exchanges
     
     def all_players_ready(self):
         """全プレイヤーがカード交換を終えたか"""
@@ -226,6 +252,7 @@ def handle_create_room(data):
     
     # プレイヤーを追加
     game.add_player(request.sid, player_name)
+    game.creator_socket_id = request.sid  # ルーム作成者のsocket_idを保存
     join_room(room_id)
     
     emit('room_created', {
@@ -268,7 +295,7 @@ def handle_join_room(data):
 
 @socketio.on('start_game')
 def handle_start_game(data):
-    """ゲーム開始"""
+    """ゲーム開始（ルーム作成者のみ）"""
     room_id = data.get('room_id')
     
     if room_id not in games:
@@ -281,12 +308,48 @@ def handle_start_game(data):
         emit('error', {'message': 'プレイヤーが揃っていません'})
         return
     
+    # ルーム作成者か確認
+    if game.creator_socket_id != request.sid:
+        emit('error', {'message': 'ゲーム開始はルーム作成者のみ可能です'})
+        return
+    
+    # ルーム作成者に交換回数選択を促す
+    emit('select_exchange_count', {
+        'room_id': room_id,
+        'message': '交換回数を選択してください'
+    })
+    print(f'Exchange count selection requested for room: {room_id}')
+
+
+@socketio.on('set_exchange_count')
+def handle_set_exchange_count(data):
+    """交換回数を設定してゲーム開始"""
+    room_id = data.get('room_id')
+    exchange_count = data.get('exchange_count')
+    
+    if room_id not in games:
+        emit('error', {'message': 'ルームが見つかりません'})
+        return
+    
+    game = games[room_id]
+    
+    # ルーム作成者か確認
+    if game.creator_socket_id != request.sid:
+        emit('error', {'message': '交換回数の設定はルーム作成者のみ可能です'})
+        return
+    
+    # 交換回数を設定
+    if not game.set_max_exchanges(exchange_count):
+        emit('error', {'message': '無効な交換回数です。1、2、3のいずれかを選択してください'})
+        return
+    
+    print(f'Exchange count set to {exchange_count} for room: {room_id}')
+    
     # カードを配る
     game.deal_cards()
     
-    # 各プレイヤーに手札を送信（各プレイヤーに対して自分の手札以外のカードを送信）
+    # 各プレイヤーに手札を送信
     for socket_id, player in game.players.items():
-        # このプレイヤーの手札以外のカードリストを取得
         remaining_cards_list = game.get_remaining_cards_list(socket_id)
         remaining_cards_count = len(remaining_cards_list)
         
@@ -294,10 +357,12 @@ def handle_start_game(data):
             'hand': player['hand'],
             'game_state': game.get_state(),
             'remaining_cards': remaining_cards_count,
-            'remaining_cards_list': remaining_cards_list
+            'remaining_cards_list': remaining_cards_list,
+            'max_exchanges': game.max_exchanges,
+            'current_exchange_round': game.current_exchange_round
         }, room=socket_id)
     
-    print(f'Game started in room: {room_id}')
+    print(f'Game started in room: {room_id} with {exchange_count} exchange rounds')
 
 
 @socketio.on('exchange_cards')
@@ -312,58 +377,86 @@ def handle_exchange_cards(data):
     
     game = games[room_id]
     
+    # 交換回数が設定されていない場合はエラー
+    if game.max_exchanges is None:
+        emit('error', {'message': '交換回数が設定されていません'})
+        return
+    
     if not game.exchange_cards(request.sid, card_indices):
         emit('error', {'message': 'カード交換に失敗しました'})
         return
     
+    # プレイヤーの交換回数を増やす
+    if request.sid not in game.exchange_count:
+        game.exchange_count[request.sid] = 0
+    game.exchange_count[request.sid] += 1
+    
     # 交換後の手札を送信
     player = game.players[request.sid]
-    # このプレイヤーの手札以外のカードリストを取得
     remaining_cards_list = game.get_remaining_cards_list(request.sid)
     remaining_cards_count = len(remaining_cards_list)
+    
     emit('cards_exchanged', {
         'hand': player['hand'],
         'game_state': game.get_state(),
         'remaining_cards': remaining_cards_count,
-        'remaining_cards_list': remaining_cards_list
+        'remaining_cards_list': remaining_cards_list,
+        'current_exchange_round': game.current_exchange_round,
+        'exchange_count': game.exchange_count.get(request.sid, 0),
+        'max_exchanges': game.max_exchanges
     })
     
-    # 全員が交換を終えたら結果判定（少し待ってから結果を送信）
+    # 全員が交換を終えたら次のラウンドまたは結果判定
     if game.all_players_ready():
         # 全員が交換を終えたことを通知
-        socketio.emit('all_players_ready', {'message': '全員の交換が完了しました。結果を表示します...'}, room=room_id)
+        socketio.emit('all_players_ready', {
+            'message': f'全員の交換が完了しました（{game.current_exchange_round + 1}/{game.max_exchanges}回目）',
+            'current_round': game.current_exchange_round + 1,
+            'max_rounds': game.max_exchanges
+        }, room=room_id)
         
-        # バックグラウンドタスクで待機してから結果を送信
-        def send_result_after_delay():
-            import time
-            time.sleep(3)  # 3秒待機してから結果を送信
-            
-            game.evaluate_hands()
-            winner_id = game.determine_winner()
-            
-            # 各プレイヤーに結果を送信し、戦績を更新
-            for socket_id in game.players:
-                player = game.players[socket_id]
-                winner_status = 'you' if winner_id == socket_id else ('opponent' if winner_id != 'draw' else 'draw')
-                result_data = {
-                    'your_result': game.results[socket_id],
-                    'opponent_result': game.results[[sid for sid in game.players.keys() if sid != socket_id][0]],
-                    'winner': winner_status,
-                    'game_state': game.get_state(),
-                    'player_name': player['name']  # プレイヤー名を含める
-                }
+        # 指定回数の交換が完了したか確認
+        if game.current_exchange_round + 1 >= game.max_exchanges:
+            # 全ての交換が完了したので結果を判定
+            def send_result_after_delay():
+                import time
+                time.sleep(3)  # 3秒待機してから結果を送信
                 
-                # サーバー側で戦績を更新
-                try:
-                    updated_stats = update_player_stats(player['name'], result_data)
-                    print(f'戦績を更新: player_name={player["name"]}, stats={updated_stats}')
-                except Exception as e:
-                    print(f'戦績更新エラー: player_name={player["name"]}, error={e}')
+                game.evaluate_hands()
+                winner_id = game.determine_winner()
                 
-                print(f'ゲーム結果を送信: socket_id={socket_id}, player_name={player["name"]}, winner={winner_status}')
-                socketio.emit('game_result', result_data, room=socket_id)
-        
-        socketio.start_background_task(send_result_after_delay)
+                # 各プレイヤーに結果を送信し、戦績を更新
+                for socket_id in game.players:
+                    player = game.players[socket_id]
+                    winner_status = 'you' if winner_id == socket_id else ('opponent' if winner_id != 'draw' else 'draw')
+                    result_data = {
+                        'your_result': game.results[socket_id],
+                        'opponent_result': game.results[[sid for sid in game.players.keys() if sid != socket_id][0]],
+                        'winner': winner_status,
+                        'game_state': game.get_state(),
+                        'player_name': player['name']  # プレイヤー名を含める
+                    }
+                    
+                    # サーバー側で戦績を更新
+                    try:
+                        updated_stats = update_player_stats(player['name'], result_data)
+                        print(f'戦績を更新: player_name={player["name"]}, stats={updated_stats}')
+                    except Exception as e:
+                        print(f'戦績更新エラー: player_name={player["name"]}, error={e}')
+                    
+                    print(f'ゲーム結果を送信: socket_id={socket_id}, player_name={player["name"]}, winner={winner_status}')
+                    socketio.emit('game_result', result_data, room=socket_id)
+            
+            socketio.start_background_task(send_result_after_delay)
+        else:
+            # 次の交換ラウンドに進む
+            game.increment_exchange_round()
+            # 次のラウンド開始を通知
+            socketio.emit('next_exchange_round', {
+                'message': f'第{game.current_exchange_round + 1}回目の交換を開始してください',
+                'current_round': game.current_exchange_round + 1,
+                'max_rounds': game.max_exchanges
+            }, room=room_id)
     else:
         # 相手が交換中であることを通知
         socketio.emit('waiting_for_opponent', game.get_state(), room=room_id)

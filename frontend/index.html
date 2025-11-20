@@ -70,6 +70,7 @@
                     <span id="room-id-display">ルーム: </span>
                     <span id="phase-display">待機中</span>
                     <span id="opponent-status"></span>
+                    <span id="exchange-round-display" style="display: none; font-weight: bold; color: #667eea; margin: 0 10px;"></span>
                     <button id="show-hands-game-btn" class="btn btn-small btn-secondary">役と確率</button>
                     <button id="show-stats-btn" class="btn btn-small btn-secondary">統計</button>
                 </div>
@@ -230,6 +231,25 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 交換回数選択モーダル -->
+    <div id="exchange-count-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>交換回数を選択してください</h2>
+            </div>
+            <div class="modal-body">
+                <div class="exchange-count-selection">
+                    <p class="exchange-count-message">このゲームで行う交換回数を選択してください。</p>
+                    <div class="exchange-count-buttons">
+                        <button id="select-exchange-1" class="btn btn-primary btn-exchange-count">1回</button>
+                        <button id="select-exchange-2" class="btn btn-primary btn-exchange-count">2回</button>
+                        <button id="select-exchange-3" class="btn btn-primary btn-exchange-count">3回</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

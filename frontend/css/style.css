@@ -822,6 +822,32 @@ header h1 {
     font-size: 2rem;
     color: white;
     cursor: pointer;
+}
+
+/* 交換回数選択モーダル */
+.exchange-count-selection {
+    text-align: center;
+    padding: 30px;
+}
+
+.exchange-count-message {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.exchange-count-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-exchange-count {
+    min-width: 100px;
+    padding: 15px 30px;
+    font-size: 1.3rem;
+    font-weight: bold;
     padding: 0;
     width: 35px;
     height: 35px;

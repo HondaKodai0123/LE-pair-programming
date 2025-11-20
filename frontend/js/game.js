@@ -12,6 +12,9 @@ let selectedCardIds = []; // 選択されたカードのIDを保存（並び替�
 let selectedCardIndices = []; // 選択されたカードのインデックスを直接保存
 let gamePhase = 'lobby';
 let currentPlayerName = ''; // 現在のプレイヤー名
+let maxExchanges = null; // 最大交換回数
+let currentExchangeRound = 0; // 現在の交換ラウンド
+let isRoomCreator = false; // ルーム作成者かどうか
 
 // サーバーのURL（本番環境では適切に設定）
 const SERVER_URL = window.location.origin;
@@ -44,6 +47,7 @@ function initializeSocket() {
     // ルーム作成成功
     socket.on('room_created', (data) => {
         currentRoomId = data.room_id;
+        isRoomCreator = true; // ルーム作成者としてマーク
         // サーバーから返されたプレイヤー名を設定（確実に設定するため）
         if (data.player_name) {
             currentPlayerName = data.player_name;
@@ -59,6 +63,7 @@ function initializeSocket() {
     // ルーム参加成功
     socket.on('room_joined', (data) => {
         currentRoomId = data.room_id;
+        isRoomCreator = false; // ルーム参加者としてマーク
         // サーバーから返されたプレイヤー名を設定（確実に設定するため）
         if (data.player_name) {
             currentPlayerName = data.player_name;
@@ -98,6 +103,13 @@ function initializeSocket() {
         gamePhase = 'draw_phase';
         showScreen('game-screen');
         
+        // 交換回数情報を設定
+        if (data.max_exchanges !== undefined) {
+            maxExchanges = data.max_exchanges;
+            currentExchangeRound = data.current_exchange_round || 1;
+            updateExchangeRoundDisplay();
+        }
+        
         // 残りのカード枚数を表示
         if (data.remaining_cards !== undefined) {
             updateRemainingCards(data.remaining_cards);
@@ -116,6 +128,13 @@ function initializeSocket() {
     socket.on('cards_exchanged', (data) => {
         console.log('cards_exchanged イベント受信:', data);
         console.log('交換後の手札（並び替え前）:', data.hand);
+        
+        // 交換回数情報を更新
+        if (data.current_exchange_round !== undefined) {
+            currentExchangeRound = data.current_exchange_round;
+            updateExchangeRoundDisplay();
+        }
+        
         // 交換前の手札を保存（まだ保存されていない場合）
         if (playerHandBeforeExchange.length === 0) {
             playerHandBeforeExchange = [...playerHand];
@@ -181,7 +200,29 @@ function initializeSocket() {
 
     // 全員の交換完了
     socket.on('all_players_ready', (data) => {
-        showStatus(data.message || '全員の交換が完了しました。結果を表示します...', 'info');
+        const message = data.message || '全員の交換が完了しました。結果を表示します...';
+        showStatus(message, 'info');
+        console.log('全員の交換完了:', data);
+    });
+
+    // 交換回数選択を促す
+    socket.on('select_exchange_count', (data) => {
+        console.log('交換回数選択を促す:', data);
+        showExchangeCountModal();
+    });
+
+    // 次の交換ラウンド開始
+    socket.on('next_exchange_round', (data) => {
+        console.log('次の交換ラウンド開始:', data);
+        currentExchangeRound = data.current_round || 0;
+        showStatus(data.message || `第${data.current_round}回目の交換を開始してください`, 'info');
+        // 交換ボタンを再有効化
+        enableExchangeButtons();
+        // 選択をリセット
+        selectedCardIds = [];
+        selectedCardIndices = [];
+        // 手札を再表示（選択可能な状態に）
+        renderPlayerCards();
     });
 
     // ゲーム結果
@@ -448,6 +489,17 @@ function setupEventListeners() {
             }
         });
     }
+
+    // 交換回数選択ボタン
+    document.getElementById('select-exchange-1').addEventListener('click', () => {
+        selectExchangeCount(1);
+    });
+    document.getElementById('select-exchange-2').addEventListener('click', () => {
+        selectExchangeCount(2);
+    });
+    document.getElementById('select-exchange-3').addEventListener('click', () => {
+        selectExchangeCount(3);
+    });
 }
 
 /**
@@ -1110,6 +1162,53 @@ function closeHandsModal() {
 }
 
 /**
+ * 交換回数選択モーダルを表示
+ */
+function showExchangeCountModal() {
+    const modal = document.getElementById('exchange-count-modal');
+    if (modal) {
+        modal.classList.add('show');
+    }
+}
+
+/**
+ * 交換回数選択モーダルを閉じる
+ */
+function closeExchangeCountModal() {
+    const modal = document.getElementById('exchange-count-modal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+/**
+ * 交換回数選択（1, 2, 3回）
+ */
+function selectExchangeCount(count) {
+    if (currentRoomId && count >= 1 && count <= 3) {
+        socket.emit('set_exchange_count', {
+            room_id: currentRoomId,
+            exchange_count: count
+        });
+        closeExchangeCountModal();
+        showStatus(`交換回数を${count}回に設定しました`, 'success');
+    }
+}
+
+/**
+ * 交換ラウンド表示を更新
+ */
+function updateExchangeRoundDisplay() {
+    const display = document.getElementById('exchange-round-display');
+    if (display && maxExchanges !== null) {
+        display.textContent = `第${currentExchangeRound}回目の交換（全${maxExchanges}回）`;
+        display.style.display = 'block';
+    } else if (display) {
+        display.style.display = 'none';
+    }
+}
+
+/**
  * プレイヤー名をローカルストレージに保存
  */
 function savePlayerName(playerName) {
@@ -1578,6 +1677,9 @@ function resetGame() {
     selectedCardIds = [];
     selectedCardIndices = [];
     gamePhase = 'lobby';
+    maxExchanges = null;
+    currentExchangeRound = 0;
+    
     const playerCardsContainer = document.getElementById('player-cards');
     if (playerCardsContainer) {
         playerCardsContainer.innerHTML = '';
