@@ -1413,6 +1413,15 @@ function showAllPlayersHandsSection() {
     if (section) {
         section.style.display = 'block';
         displayAllPlayersHandsRecords();
+        
+        // セクションの位置までスムーズにスクロール
+        setTimeout(() => {
+            section.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start',
+                inline: 'nearest'
+            });
+        }, 100); // 少し待ってからスクロール（表示アニメーションのため）
     }
 }
 
