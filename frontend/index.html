@@ -21,7 +21,10 @@
                 
                 <div class="input-group">
                     <label for="player-name">プレイヤー名:</label>
-                    <input type="text" id="player-name" placeholder="名前を入力" maxlength="20">
+                    <input type="text" id="player-name" list="player-names" placeholder="名前を入力" maxlength="20">
+                    <datalist id="player-names">
+                        <!-- 過去のプレイヤー名がここに動的に追加されます -->
+                    </datalist>
                 </div>
 
                 <div class="button-group">

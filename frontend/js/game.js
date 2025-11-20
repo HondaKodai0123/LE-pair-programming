@@ -19,6 +19,7 @@ const SERVER_URL = window.location.origin;
 document.addEventListener('DOMContentLoaded', () => {
     initializeSocket();
     setupEventListeners();
+    loadPlayerNames();
 });
 
 /**
@@ -192,6 +193,9 @@ function setupEventListeners() {
     // ルーム作成
     document.getElementById('create-room-btn').addEventListener('click', () => {
         const playerName = document.getElementById('player-name').value.trim() || 'Player1';
+        if (playerName && playerName !== 'Player1') {
+            savePlayerName(playerName);
+        }
         socket.emit('create_room', { player_name: playerName });
     });
 
@@ -205,6 +209,9 @@ function setupEventListeners() {
             return;
         }
         
+        if (playerName && playerName !== 'Player2') {
+            savePlayerName(playerName);
+        }
         socket.emit('join_room', { room_id: roomId, player_name: playerName });
     });
 
@@ -943,6 +950,66 @@ function showHandsModal() {
 function closeHandsModal() {
     const modal = document.getElementById('hands-modal');
     modal.classList.remove('show');
+}
+
+/**
+ * プレイヤー名をローカルストレージに保存
+ */
+function savePlayerName(playerName) {
+    try {
+        const savedNames = getSavedPlayerNames();
+        // 既に存在する場合は削除（重複を避けるため）
+        const filteredNames = savedNames.filter(name => name !== playerName);
+        // 新しい名前を先頭に追加（最新のものから表示）
+        filteredNames.unshift(playerName);
+        // 最大10件まで保存
+        const namesToSave = filteredNames.slice(0, 10);
+        localStorage.setItem('poker_player_names', JSON.stringify(namesToSave));
+        // datalistを更新
+        updatePlayerNamesDatalist();
+    } catch (e) {
+        console.error('Failed to save player name:', e);
+    }
+}
+
+/**
+ * ローカルストレージからプレイヤー名を取得
+ */
+function getSavedPlayerNames() {
+    try {
+        const saved = localStorage.getItem('poker_player_names');
+        if (saved) {
+            return JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error('Failed to get saved player names:', e);
+    }
+    return [];
+}
+
+/**
+ * プレイヤー名のdatalistを更新
+ */
+function updatePlayerNamesDatalist() {
+    const datalist = document.getElementById('player-names');
+    const savedNames = getSavedPlayerNames();
+    
+    // datalistをクリア
+    datalist.innerHTML = '';
+    
+    // 保存された名前をdatalistに追加
+    savedNames.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        datalist.appendChild(option);
+    });
+}
+
+/**
+ * ページ読み込み時にプレイヤー名を読み込む
+ */
+function loadPlayerNames() {
+    updatePlayerNamesDatalist();
 }
 
 /**
