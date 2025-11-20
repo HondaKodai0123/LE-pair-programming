@@ -371,7 +371,7 @@ def handle_set_exchange_count(data):
             'remaining_cards': remaining_cards_count,
             'remaining_cards_list': remaining_cards_list,
             'max_exchanges': game.max_exchanges,
-            'current_exchange_round': game.current_exchange_round
+            'current_exchange_round': game.current_exchange_round + 1  # 表示用に+1（0ベースから1ベースに変換）
         }, room=socket_id)
     
     print(f'Game started in room: {room_id} with {exchange_count} exchange rounds')
