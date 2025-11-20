@@ -62,14 +62,20 @@ class GameRoom:
         return len(self.players) == 2
     
     def deal_cards(self):
-        """カードを配る"""
-        self.deck.reset()
-        for socket_id in self.players:
-            hand = self.deck.draw(5)
-            # クライアント側と同じ並び替えロジックを適用
-            self.players[socket_id]['hand'] = sort_hand(hand)
-            self.players[socket_id]['ready'] = False
-        self.phase = 'draw_phase'
+        """カードを配る（初回のみ）"""
+        # 初回のみデッキをリセットしてカードを配る
+        if self.current_exchange_round == 0:
+            self.deck.reset()
+            for socket_id in self.players:
+                hand = self.deck.draw(5)
+                # クライアント側と同じ並び替えロジックを適用
+                self.players[socket_id]['hand'] = sort_hand(hand)
+                self.players[socket_id]['ready'] = False
+            self.phase = 'draw_phase'
+        else:
+            # 2回目以降のラウンドでは、デッキをリセットせず、ready状態のみリセット
+            for socket_id in self.players:
+                self.players[socket_id]['ready'] = False
     
     def exchange_cards(self, socket_id, card_indices):
         """カードを交換する"""
@@ -451,10 +457,12 @@ def handle_exchange_cards(data):
         else:
             # 次の交換ラウンドに進む
             game.increment_exchange_round()
-            # 次のラウンド開始を通知
+            print(f'次のラウンドに進みます: current_exchange_round={game.current_exchange_round}, max_exchanges={game.max_exchanges}')
+            
+            # 次のラウンド開始を通知（increment後なので、current_exchange_roundは既に増えている）
             socketio.emit('next_exchange_round', {
-                'message': f'第{game.current_exchange_round + 1}回目の交換を開始してください',
-                'current_round': game.current_exchange_round + 1,
+                'message': f'第{game.current_exchange_round}回目の交換を開始してください',
+                'current_round': game.current_exchange_round,
                 'max_rounds': game.max_exchanges
             }, room=room_id)
     else:

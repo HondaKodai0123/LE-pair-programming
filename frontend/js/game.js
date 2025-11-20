@@ -214,15 +214,33 @@ function initializeSocket() {
     // 次の交換ラウンド開始
     socket.on('next_exchange_round', (data) => {
         console.log('次の交換ラウンド開始:', data);
-        currentExchangeRound = data.current_round || 0;
-        showStatus(data.message || `第${data.current_round}回目の交換を開始してください`, 'info');
-        // 交換ボタンを再有効化
-        enableExchangeButtons();
+        currentExchangeRound = data.current_round || 1;
+        
+        // 交換回数表示を更新
+        if (maxExchanges !== null) {
+            updateExchangeRoundDisplay();
+        }
+        
+        // 交換前の手札を現在の手札に更新（次のラウンドでは、現在の手札が交換前の手札になる）
+        playerHandBeforeExchange = [...playerHand];
+        
+        // 交換前の手札を表示
+        renderPlayerCardsBefore();
+        
         // 選択をリセット
         selectedCardIds = [];
         selectedCardIndices = [];
+        
         // 手札を再表示（選択可能な状態に）
         renderPlayerCards();
+        
+        // 交換ボタンを再有効化
+        enableExchangeButtons();
+        
+        // ステータスメッセージを表示
+        showStatus(data.message || `第${data.current_round}回目の交換を開始してください`, 'info');
+        
+        console.log('次のラウンド開始 - currentExchangeRound:', currentExchangeRound, 'maxExchanges:', maxExchanges);
     });
 
     // ゲーム結果
