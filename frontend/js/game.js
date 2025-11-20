@@ -1688,6 +1688,13 @@ function resetGame() {
     if (playerCardsBeforeContainer) {
         playerCardsBeforeContainer.innerHTML = '';
     }
+    // 交換回数表示をリセット
+    const exchangeRoundDisplay = document.getElementById('exchange-round-display');
+    if (exchangeRoundDisplay) {
+        exchangeRoundDisplay.style.display = 'none';
+        exchangeRoundDisplay.textContent = '';
+    }
+    
     // 残りのカード表示をリセット
     const remainingCardsElement = document.getElementById('remaining-cards');
     if (remainingCardsElement) {
