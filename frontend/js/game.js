@@ -11,6 +11,7 @@ let selectedCards = [];
 let selectedCardIds = []; // 選択されたカードのIDを保存（並び替え対応）
 let selectedCardIndices = []; // 選択されたカードのインデックスを直接保存
 let gamePhase = 'lobby';
+let currentPlayerName = ''; // 現在のプレイヤー名
 
 // サーバーのURL（本番環境では適切に設定）
 const SERVER_URL = window.location.origin;
@@ -193,6 +194,7 @@ function setupEventListeners() {
     // ルーム作成
     document.getElementById('create-room-btn').addEventListener('click', () => {
         const playerName = document.getElementById('player-name').value.trim() || 'Player1';
+        currentPlayerName = playerName;
         if (playerName && playerName !== 'Player1') {
             savePlayerName(playerName);
         }
@@ -203,6 +205,7 @@ function setupEventListeners() {
     document.getElementById('join-room-btn').addEventListener('click', () => {
         const roomId = document.getElementById('room-id-input').value.trim().toUpperCase();
         const playerName = document.getElementById('player-name').value.trim() || 'Player2';
+        currentPlayerName = playerName;
         
         if (!roomId || roomId.length !== 6) {
             showStatus('6桁のルームIDを入力してください', 'error');
@@ -326,6 +329,23 @@ function setupEventListeners() {
     document.getElementById('hands-modal').addEventListener('click', (e) => {
         if (e.target.id === 'hands-modal') {
             closeHandsModal();
+        }
+    });
+
+    // 統計情報を表示
+    document.getElementById('show-stats-btn').addEventListener('click', () => {
+        showStatsModal();
+    });
+
+    // 統計モーダルを閉じる
+    document.getElementById('close-stats-modal-btn').addEventListener('click', () => {
+        closeStatsModal();
+    });
+
+    // 統計モーダルの背景をクリックして閉じる
+    document.getElementById('stats-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'stats-modal') {
+            closeStatsModal();
         }
     });
 }
@@ -924,6 +944,11 @@ function showResultScreen(data) {
         opponentCardsContainer.appendChild(createCardElement(card, -1));
     });
     document.getElementById('opponent-hand-name').textContent = data.opponent_result.hand_result.hand_name;
+    
+    // 統計情報を更新
+    if (currentPlayerName) {
+        updatePlayerStats(currentPlayerName, data);
+    }
 }
 
 /**
@@ -1010,6 +1035,160 @@ function updatePlayerNamesDatalist() {
  */
 function loadPlayerNames() {
     updatePlayerNamesDatalist();
+}
+
+/**
+ * プレイヤーの統計情報を更新
+ */
+function updatePlayerStats(playerName, gameResult) {
+    try {
+        const stats = getPlayerStats(playerName);
+        
+        // 対戦数を増やす
+        stats.totalGames = (stats.totalGames || 0) + 1;
+        
+        // 勝敗を更新
+        if (gameResult.winner === 'you') {
+            stats.wins = (stats.wins || 0) + 1;
+        } else if (gameResult.winner === 'opponent') {
+            stats.losses = (stats.losses || 0) + 1;
+        } else {
+            stats.draws = (stats.draws || 0) + 1;
+        }
+        
+        // 出した役を記録
+        const handName = gameResult.your_result.hand_result.hand_name;
+        if (!stats.hands) {
+            stats.hands = {};
+        }
+        stats.hands[handName] = (stats.hands[handName] || 0) + 1;
+        
+        // ローカルストレージに保存
+        const allStats = getAllPlayerStats();
+        allStats[playerName] = stats;
+        localStorage.setItem('poker_player_stats', JSON.stringify(allStats));
+    } catch (e) {
+        console.error('Failed to update player stats:', e);
+    }
+}
+
+/**
+ * プレイヤーの統計情報を取得
+ */
+function getPlayerStats(playerName) {
+    try {
+        const allStats = getAllPlayerStats();
+        return allStats[playerName] || {
+            totalGames: 0,
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            hands: {}
+        };
+    } catch (e) {
+        console.error('Failed to get player stats:', e);
+        return {
+            totalGames: 0,
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            hands: {}
+        };
+    }
+}
+
+/**
+ * 全プレイヤーの統計情報を取得
+ */
+function getAllPlayerStats() {
+    try {
+        const saved = localStorage.getItem('poker_player_stats');
+        if (saved) {
+            return JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error('Failed to get all player stats:', e);
+    }
+    return {};
+}
+
+/**
+ * 統計情報モーダルを表示
+ */
+function showStatsModal() {
+    const modal = document.getElementById('stats-modal');
+    const statsDisplay = document.getElementById('stats-display');
+    const noStatsMessage = document.getElementById('no-stats-message');
+    
+    if (currentPlayerName) {
+        const stats = getPlayerStats(currentPlayerName);
+        
+        if (stats.totalGames > 0) {
+            // 統計情報を表示
+            noStatsMessage.style.display = 'none';
+            statsDisplay.style.display = 'block';
+            
+            // 統計情報を更新
+            document.getElementById('stats-player-name').textContent = currentPlayerName;
+            document.getElementById('stats-total-games').textContent = stats.totalGames;
+            document.getElementById('stats-wins').textContent = stats.wins || 0;
+            document.getElementById('stats-losses').textContent = stats.losses || 0;
+            
+            // 勝率を計算
+            const winRate = stats.totalGames > 0 ? ((stats.wins || 0) / stats.totalGames * 100).toFixed(1) : 0;
+            document.getElementById('stats-win-rate').textContent = `${winRate}%`;
+            
+            // 役の統計を表示
+            const handsList = document.getElementById('stats-hands-list');
+            handsList.innerHTML = '';
+            
+            // 役の一覧（強さ順）
+            const handOrder = [
+                'ロイヤルフラッシュ',
+                'ストレートフラッシュ',
+                'フォーカード',
+                'フルハウス',
+                'フラッシュ',
+                'ストレート',
+                'スリーカード',
+                'ツーペア',
+                'ワンペア',
+                'ハイカード'
+            ];
+            
+            handOrder.forEach(handName => {
+                const count = stats.hands[handName] || 0;
+                if (count > 0) {
+                    const percentage = (count / stats.totalGames * 100).toFixed(1);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${handName}</strong></td>
+                        <td>${count}回</td>
+                        <td>${percentage}%</td>
+                    `;
+                    handsList.appendChild(row);
+                }
+            });
+        } else {
+            // 統計データがない場合
+            noStatsMessage.style.display = 'block';
+            statsDisplay.style.display = 'none';
+        }
+    } else {
+        // プレイヤー名が設定されていない場合
+        noStatsMessage.style.display = 'block';
+        statsDisplay.style.display = 'none';
+    }
+    
+    modal.classList.add('show');
+}
+
+/**
+ * 統計情報モーダルを閉じる
+ */
+function closeStatsModal() {
+    const modal = document.getElementById('stats-modal');
+    modal.classList.remove('show');
 }
 
 /**

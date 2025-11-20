@@ -66,6 +66,7 @@
                     <span id="phase-display">待機中</span>
                     <span id="opponent-status"></span>
                     <button id="show-hands-game-btn" class="btn btn-small btn-secondary">役と確率</button>
+                    <button id="show-stats-btn" class="btn btn-small btn-secondary">統計</button>
                 </div>
             </div>
 
@@ -224,6 +225,61 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 統計情報モーダル -->
+    <div id="stats-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>統計情報</h2>
+                <button id="close-stats-modal-btn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="stats-content">
+                    <div id="no-stats-message" class="no-stats-message">
+                        <p>まだ統計データがありません。ゲームをプレイすると統計情報が表示されます。</p>
+                    </div>
+                    <div id="stats-display" style="display: none;">
+                        <div class="stats-summary">
+                            <h3 id="stats-player-name"></h3>
+                            <div class="stats-summary-grid">
+                                <div class="stat-item">
+                                    <div class="stat-label">対戦数</div>
+                                    <div class="stat-value" id="stats-total-games">0</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">勝利数</div>
+                                    <div class="stat-value" id="stats-wins">0</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">敗北数</div>
+                                    <div class="stat-value" id="stats-losses">0</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">勝率</div>
+                                    <div class="stat-value" id="stats-win-rate">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-hands">
+                            <h3>これまで出した役</h3>
+                            <table class="stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>役</th>
+                                        <th>回数</th>
+                                        <th>割合</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stats-hands-list">
+                                    <!-- 役の統計がここに動的に追加されます -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
