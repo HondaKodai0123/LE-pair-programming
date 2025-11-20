@@ -38,6 +38,10 @@ function initializeSocket() {
     // ルーム作成成功
     socket.on('room_created', (data) => {
         currentRoomId = data.room_id;
+        // サーバーから返されたプレイヤー名を設定（確実に設定するため）
+        if (data.player_name) {
+            currentPlayerName = data.player_name;
+        }
         showRoomInfo(data.room_id, data.game_state);
         showStatus(`ルーム ${data.room_id} を作成しました`, 'success');
     });
@@ -45,6 +49,10 @@ function initializeSocket() {
     // ルーム参加成功
     socket.on('room_joined', (data) => {
         currentRoomId = data.room_id;
+        // サーバーから返されたプレイヤー名を設定（確実に設定するため）
+        if (data.player_name) {
+            currentPlayerName = data.player_name;
+        }
         showRoomInfo(data.room_id, data.game_state);
         showStatus(`ルーム ${data.room_id} に参加しました`, 'success');
     });
@@ -948,6 +956,8 @@ function showResultScreen(data) {
     // 統計情報を更新
     if (currentPlayerName) {
         updatePlayerStats(currentPlayerName, data);
+    } else {
+        console.warn('統計情報を更新できません: currentPlayerNameが空です');
     }
 }
 
@@ -1042,6 +1052,8 @@ function loadPlayerNames() {
  */
 function updatePlayerStats(playerName, gameResult) {
     try {
+        console.log('統計情報を更新します:', { playerName, winner: gameResult.winner, handName: gameResult.your_result.hand_result.hand_name });
+        
         const stats = getPlayerStats(playerName);
         
         // 対戦数を増やす
@@ -1067,6 +1079,8 @@ function updatePlayerStats(playerName, gameResult) {
         const allStats = getAllPlayerStats();
         allStats[playerName] = stats;
         localStorage.setItem('poker_player_stats', JSON.stringify(allStats));
+        
+        console.log('統計情報を更新しました:', stats);
     } catch (e) {
         console.error('Failed to update player stats:', e);
     }

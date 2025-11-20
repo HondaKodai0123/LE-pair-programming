@@ -229,7 +229,8 @@ def handle_create_room(data):
     
     emit('room_created', {
         'room_id': room_id,
-        'game_state': game.get_state()
+        'game_state': game.get_state(),
+        'player_name': player_name
     })
     print(f'Room created: {room_id}')
 
@@ -254,7 +255,8 @@ def handle_join_room(data):
     
     emit('room_joined', {
         'room_id': room_id,
-        'game_state': game.get_state()
+        'game_state': game.get_state(),
+        'player_name': player_name
     })
     
     # 他のプレイヤーに通知
