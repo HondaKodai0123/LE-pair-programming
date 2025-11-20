@@ -26,6 +26,7 @@
 
                 <div class="button-group">
                     <button id="create-room-btn" class="btn btn-primary">ルームを作成</button>
+                    <button id="show-hands-lobby-btn" class="btn btn-secondary">役と確率を見る</button>
                 </div>
 
                 <div class="divider">
@@ -61,6 +62,7 @@
                     <span id="room-id-display">ルーム: </span>
                     <span id="phase-display">待機中</span>
                     <span id="opponent-status"></span>
+                    <button id="show-hands-game-btn" class="btn btn-small btn-secondary">役と確率</button>
                 </div>
             </div>
 
@@ -148,6 +150,79 @@
 
         <!-- ステータスメッセージ -->
         <div id="status-message" class="status-message"></div>
+    </div>
+
+    <!-- 役と確率の一覧表モーダル -->
+    <div id="hands-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>役とその確率の一覧表</h2>
+                <button id="close-modal-btn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <table class="hands-table">
+                    <thead>
+                        <tr>
+                            <th>役</th>
+                            <th>確率</th>
+                            <th>説明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>ロイヤルフラッシュ</strong></td>
+                            <td>約0.000154%</td>
+                            <td>A, K, Q, J, 10が同じスートで揃う</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ストレートフラッシュ</strong></td>
+                            <td>約0.00139%</td>
+                            <td>同じスートで連続した5枚のカード</td>
+                        </tr>
+                        <tr>
+                            <td><strong>フォーカード</strong></td>
+                            <td>約0.0240%</td>
+                            <td>同じ数字のカード4枚</td>
+                        </tr>
+                        <tr>
+                            <td><strong>フルハウス</strong></td>
+                            <td>約0.144%</td>
+                            <td>スリーカードとワンペアの組み合わせ</td>
+                        </tr>
+                        <tr>
+                            <td><strong>フラッシュ</strong></td>
+                            <td>約0.197%</td>
+                            <td>同じスートのカード5枚</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ストレート</strong></td>
+                            <td>約0.392%</td>
+                            <td>連続した5枚のカード（スートは異なる）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>スリーカード</strong></td>
+                            <td>約2.11%</td>
+                            <td>同じ数字のカード3枚</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ツーペア</strong></td>
+                            <td>約4.75%</td>
+                            <td>ペアが2組</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ワンペア</strong></td>
+                            <td>約42.3%</td>
+                            <td>同じ数字のカード2枚</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ハイカード</strong></td>
+                            <td>約50.1%</td>
+                            <td>役がない場合</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script src="js/game.js"></script>

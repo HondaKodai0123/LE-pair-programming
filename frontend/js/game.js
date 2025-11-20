@@ -299,6 +299,28 @@ function setupEventListeners() {
     document.getElementById('leave-room-btn').addEventListener('click', () => {
         location.reload();
     });
+
+    // 役と確率の一覧表を表示（ルーム作成画面）
+    document.getElementById('show-hands-lobby-btn').addEventListener('click', () => {
+        showHandsModal();
+    });
+
+    // 役と確率の一覧表を表示（ゲーム画面）
+    document.getElementById('show-hands-game-btn').addEventListener('click', () => {
+        showHandsModal();
+    });
+
+    // モーダルを閉じる
+    document.getElementById('close-modal-btn').addEventListener('click', () => {
+        closeHandsModal();
+    });
+
+    // モーダルの背景をクリックして閉じる
+    document.getElementById('hands-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'hands-modal') {
+            closeHandsModal();
+        }
+    });
 }
 
 /**
@@ -905,6 +927,22 @@ function showScreen(screenId) {
         screen.classList.remove('active');
     });
     document.getElementById(screenId).classList.add('active');
+}
+
+/**
+ * 役と確率の一覧表モーダルを表示
+ */
+function showHandsModal() {
+    const modal = document.getElementById('hands-modal');
+    modal.classList.add('show');
+}
+
+/**
+ * 役と確率の一覧表モーダルを閉じる
+ */
+function closeHandsModal() {
+    const modal = document.getElementById('hands-modal');
+    modal.classList.remove('show');
 }
 
 /**
