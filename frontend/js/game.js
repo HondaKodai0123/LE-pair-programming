@@ -129,11 +129,8 @@ function initializeSocket() {
         console.log('cards_exchanged イベント受信:', data);
         console.log('交換後の手札（並び替え前）:', data.hand);
         
-        // 交換回数情報を更新
-        if (data.current_exchange_round !== undefined) {
-            currentExchangeRound = data.current_exchange_round;
-            updateExchangeRoundDisplay();
-        }
+        // 交換回数情報は更新しない（next_exchange_roundイベントで更新される）
+        // ここで更新すると、next_exchange_roundイベントの前に古い値で上書きされてしまう
         
         // 交換前の手札を保存（まだ保存されていない場合）
         if (playerHandBeforeExchange.length === 0) {
@@ -214,12 +211,18 @@ function initializeSocket() {
     // 次の交換ラウンド開始
     socket.on('next_exchange_round', (data) => {
         console.log('次の交換ラウンド開始:', data);
-        currentExchangeRound = data.current_round || 1;
         
-        // 交換回数表示を更新
-        if (maxExchanges !== null) {
-            updateExchangeRoundDisplay();
+        // 交換回数情報を更新（必ずここで更新する）
+        if (data.current_round !== undefined) {
+            currentExchangeRound = data.current_round;
         }
+        if (data.max_rounds !== undefined) {
+            maxExchanges = data.max_rounds;
+        }
+        
+        // 交換回数表示を更新（必ず呼ぶ）
+        updateExchangeRoundDisplay();
+        console.log('交換回数表示を更新: currentExchangeRound=', currentExchangeRound, 'maxExchanges=', maxExchanges);
         
         // 交換前の手札を現在の手札に更新（次のラウンドでは、現在の手札が交換前の手札になる）
         playerHandBeforeExchange = [...playerHand];

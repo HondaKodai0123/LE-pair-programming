@@ -418,7 +418,7 @@ def handle_exchange_cards(data):
         'game_state': game.get_state(),
         'remaining_cards': remaining_cards_count,
         'remaining_cards_list': remaining_cards_list,
-        'current_exchange_round': game.current_exchange_round,
+        'current_exchange_round': game.current_exchange_round + 1,  # 表示用に+1（0ベースから1ベースに変換）
         'exchange_count': game.exchange_count.get(request.sid, 0),
         'max_exchanges': game.max_exchanges
     })
