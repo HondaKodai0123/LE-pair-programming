@@ -342,11 +342,13 @@ def handle_exchange_cards(data):
             
             # 各プレイヤーに結果を送信
             for socket_id in game.players:
+                player = game.players[socket_id]
                 result_data = {
                     'your_result': game.results[socket_id],
                     'opponent_result': game.results[[sid for sid in game.players.keys() if sid != socket_id][0]],
                     'winner': 'you' if winner_id == socket_id else ('opponent' if winner_id != 'draw' else 'draw'),
-                    'game_state': game.get_state()
+                    'game_state': game.get_state(),
+                    'player_name': player['name']  # プレイヤー名を含める
                 }
                 socketio.emit('game_result', result_data, room=socket_id)
         

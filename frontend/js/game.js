@@ -954,10 +954,16 @@ function showResultScreen(data) {
     document.getElementById('opponent-hand-name').textContent = data.opponent_result.hand_result.hand_name;
     
     // 統計情報を更新
-    if (currentPlayerName) {
-        updatePlayerStats(currentPlayerName, data);
+    // サーバーから返されたプレイヤー名を優先的に使用（確実に統計を記録するため）
+    const playerNameForStats = data.player_name || currentPlayerName;
+    if (playerNameForStats) {
+        // サーバーから返されたプレイヤー名でcurrentPlayerNameを更新
+        if (data.player_name) {
+            currentPlayerName = data.player_name;
+        }
+        updatePlayerStats(playerNameForStats, data);
     } else {
-        console.warn('統計情報を更新できません: currentPlayerNameが空です');
+        console.warn('統計情報を更新できません: プレイヤー名が取得できませんでした', { data, currentPlayerName });
     }
 }
 
