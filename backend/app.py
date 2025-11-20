@@ -84,6 +84,11 @@ class GameRoom:
         
         player = self.players[socket_id]
         
+        # 既にこのラウンドで交換済みの場合はエラー
+        if player['ready']:
+            print(f'警告: プレイヤー {socket_id} は既にこのラウンドで交換済みです')
+            return False
+        
         # 指定されたカードを捨てて新しいカードを引く
         for index in sorted(card_indices, reverse=True):
             if 0 <= index < len(player['hand']):
@@ -97,6 +102,7 @@ class GameRoom:
         player['hand'] = sort_hand(player['hand'])
         
         player['ready'] = True
+        print(f'プレイヤー {socket_id} が交換しました。ready={player["ready"]}, current_round={self.current_exchange_round}')
         return True
     
     def set_max_exchanges(self, max_exchanges):
@@ -388,8 +394,13 @@ def handle_exchange_cards(data):
         emit('error', {'message': '交換回数が設定されていません'})
         return
     
+    # 現在のプレイヤーの状態を確認
+    if request.sid in game.players:
+        player = game.players[request.sid]
+        print(f'交換リクエスト: socket_id={request.sid}, ready={player["ready"]}, current_round={game.current_exchange_round}')
+    
     if not game.exchange_cards(request.sid, card_indices):
-        emit('error', {'message': 'カード交換に失敗しました'})
+        emit('error', {'message': 'カード交換に失敗しました。既にこのラウンドで交換済みの可能性があります。'})
         return
     
     # プレイヤーの交換回数を増やす
@@ -413,7 +424,10 @@ def handle_exchange_cards(data):
     })
     
     # 全員が交換を終えたら次のラウンドまたは結果判定
-    if game.all_players_ready():
+    all_ready = game.all_players_ready()
+    print(f'全員の交換完了チェック: all_ready={all_ready}, current_round={game.current_exchange_round}, players_ready={[(sid, p["ready"]) for sid, p in game.players.items()]}')
+    
+    if all_ready:
         # 全員が交換を終えたことを通知
         socketio.emit('all_players_ready', {
             'message': f'全員の交換が完了しました（{game.current_exchange_round + 1}/{game.max_exchanges}回目）',

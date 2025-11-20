@@ -234,13 +234,14 @@ function initializeSocket() {
         // 手札を再表示（選択可能な状態に）
         renderPlayerCards();
         
-        // 交換ボタンを再有効化
+        // 交換ボタンを再有効化（重要：次のラウンドで交換できるようにする）
         enableExchangeButtons();
         
         // ステータスメッセージを表示
         showStatus(data.message || `第${data.current_round}回目の交換を開始してください`, 'info');
         
         console.log('次のラウンド開始 - currentExchangeRound:', currentExchangeRound, 'maxExchanges:', maxExchanges);
+        console.log('交換ボタンを再有効化しました');
     });
 
     // ゲーム結果
