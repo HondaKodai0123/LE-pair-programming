@@ -223,9 +223,9 @@ function initializeSocket() {
     socket.on('all_stats_response', (data) => {
         console.log('全戦績を取得:', data);
         cachedAllStats = data.stats || {};
-        // 全プレイヤーの役の記録セクションが表示されている場合は更新
-        const allPlayersHandsSection = document.getElementById('all-players-hands-section');
-        if (allPlayersHandsSection && allPlayersHandsSection.style.display === 'block') {
+        // 全プレイヤーの役の記録モーダルが表示されている場合は更新
+        const allPlayersHandsModal = document.getElementById('all-players-hands-modal');
+        if (allPlayersHandsModal && allPlayersHandsModal.classList.contains('show')) {
             // 全プレイヤーの役の記録を更新
             displayAllPlayersHandsRecords();
         }
@@ -427,15 +427,25 @@ function setupEventListeners() {
     const showAllPlayersHandsBtn = document.getElementById('show-all-players-hands-btn');
     if (showAllPlayersHandsBtn) {
         showAllPlayersHandsBtn.addEventListener('click', () => {
-            showAllPlayersHandsSection();
+            showAllPlayersHandsModal();
         });
     }
 
-    // 全プレイヤーの役の記録セクションを閉じるボタン
-    const closeAllPlayersHandsBtn = document.getElementById('close-all-players-hands-btn');
-    if (closeAllPlayersHandsBtn) {
-        closeAllPlayersHandsBtn.addEventListener('click', () => {
-            hideAllPlayersHandsSection();
+    // 全プレイヤーの役の記録モーダルを閉じるボタン
+    const closeAllPlayersHandsModalBtn = document.getElementById('close-all-players-hands-modal-btn');
+    if (closeAllPlayersHandsModalBtn) {
+        closeAllPlayersHandsModalBtn.addEventListener('click', () => {
+            closeAllPlayersHandsModal();
+        });
+    }
+
+    // 全プレイヤーの役の記録モーダルの背景をクリックして閉じる
+    const allPlayersHandsModal = document.getElementById('all-players-hands-modal');
+    if (allPlayersHandsModal) {
+        allPlayersHandsModal.addEventListener('click', (e) => {
+            if (e.target.id === 'all-players-hands-modal') {
+                closeAllPlayersHandsModal();
+            }
         });
     }
 }
@@ -1406,32 +1416,23 @@ function displayAllPlayersHandsRecords() {
 }
 
 /**
- * 全プレイヤーの役の記録セクションを表示
+ * 全プレイヤーの役の記録モーダルを表示
  */
-function showAllPlayersHandsSection() {
-    const section = document.getElementById('all-players-hands-section');
-    if (section) {
-        section.style.display = 'block';
+function showAllPlayersHandsModal() {
+    const modal = document.getElementById('all-players-hands-modal');
+    if (modal) {
         displayAllPlayersHandsRecords();
-        
-        // セクションの位置までスムーズにスクロール
-        setTimeout(() => {
-            section.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start',
-                inline: 'nearest'
-            });
-        }, 100); // 少し待ってからスクロール（表示アニメーションのため）
+        modal.classList.add('show');
     }
 }
 
 /**
- * 全プレイヤーの役の記録セクションを非表示
+ * 全プレイヤーの役の記録モーダルを閉じる
  */
-function hideAllPlayersHandsSection() {
-    const section = document.getElementById('all-players-hands-section');
-    if (section) {
-        section.style.display = 'none';
+function closeAllPlayersHandsModal() {
+    const modal = document.getElementById('all-players-hands-modal');
+    if (modal) {
+        modal.classList.remove('show');
     }
 }
 

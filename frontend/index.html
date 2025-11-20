@@ -49,17 +49,6 @@
                 <div class="button-group">
                     <button id="join-room-btn" class="btn btn-secondary">ルームに参加</button>
                 </div>
-                
-                <!-- 全プレイヤーの役の記録セクション -->
-                <div id="all-players-hands-section" class="all-players-hands-section" style="display: none;">
-                    <div class="section-header">
-                        <h3>全プレイヤーの役の記録</h3>
-                        <button id="close-all-players-hands-btn" class="btn btn-small btn-secondary">閉じる</button>
-                    </div>
-                    <div id="all-players-hands-list">
-                        <!-- 全プレイヤーの役の記録がここに動的に追加されます -->
-                    </div>
-                </div>
             </div>
 
             <div id="room-info" class="room-info hidden">
@@ -241,6 +230,21 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全プレイヤーの役の記録モーダル -->
+    <div id="all-players-hands-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>全プレイヤーの役の記録</h2>
+                <button id="close-all-players-hands-modal-btn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="all-players-hands-list">
+                    <!-- 全プレイヤーの役の記録がここに動的に追加されます -->
+                </div>
             </div>
         </div>
     </div>
