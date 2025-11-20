@@ -224,8 +224,10 @@ function initializeSocket() {
         console.log('全戦績を取得:', data);
         cachedAllStats = data.stats || {};
         // 統計モーダルが表示されている場合は更新
-        if (document.getElementById('stats-modal')?.style.display === 'block') {
-            showStatsModal();
+        const statsModal = document.getElementById('stats-modal');
+        if (statsModal && (statsModal.style.display === 'block' || statsModal.classList.contains('show'))) {
+            // 全プレイヤーの役の記録を更新
+            displayAllPlayersHandsRecords();
         }
     });
 
@@ -1274,6 +1276,9 @@ function showStatsModal() {
                     handsList.appendChild(row);
                 }
             });
+            
+            // 全プレイヤーの役の記録を表示
+            displayAllPlayersHandsRecords();
         } else {
             // 統計データがない場合
             noStatsMessage.style.display = 'block';
@@ -1286,6 +1291,105 @@ function showStatsModal() {
     }
     
     modal.classList.add('show');
+}
+
+/**
+ * 全プレイヤーの役の記録を表示
+ */
+function displayAllPlayersHandsRecords() {
+    const allPlayersHandsList = document.getElementById('all-players-hands-list');
+    if (!allPlayersHandsList) {
+        return;
+    }
+    
+    // サーバーから全プレイヤーの戦績を取得
+    loadAllStatsFromServer();
+    
+    // キャッシュから全プレイヤーの戦績を取得
+    const allStats = getAllPlayerStats();
+    
+    // 全てのプレイヤー名を取得
+    const playerNames = Object.keys(allStats);
+    
+    if (playerNames.length === 0) {
+        allPlayersHandsList.innerHTML = '<p class="no-stats-message">まだ他のプレイヤーの統計データがありません。</p>';
+        return;
+    }
+    
+    allPlayersHandsList.innerHTML = '';
+    
+    // 役の一覧（強さ順）
+    const handOrder = [
+        'ロイヤルフラッシュ',
+        'ストレートフラッシュ',
+        'フォーカード',
+        'フルハウス',
+        'フラッシュ',
+        'ストレート',
+        'スリーカード',
+        'ツーペア',
+        'ワンペア',
+        'ハイカード'
+    ];
+    
+    // 各プレイヤーごとに役の記録を表示
+    playerNames.forEach(playerName => {
+        const playerStats = allStats[playerName];
+        if (!playerStats || !playerStats.hands || Object.keys(playerStats.hands).length === 0) {
+            return;
+        }
+        
+        const playerSection = document.createElement('div');
+        playerSection.className = 'player-hands-section';
+        
+        const playerHeader = document.createElement('div');
+        playerHeader.className = 'player-hands-header';
+        playerHeader.innerHTML = `<h4>${playerName}</h4>`;
+        playerSection.appendChild(playerHeader);
+        
+        const handsTable = document.createElement('table');
+        handsTable.className = 'stats-table player-hands-table';
+        
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th>役</th>
+                <th>回数</th>
+                <th>割合</th>
+            </tr>
+        `;
+        handsTable.appendChild(thead);
+        
+        const tbody = document.createElement('tbody');
+        
+        handOrder.forEach(handName => {
+            const count = playerStats.hands[handName] || 0;
+            if (count > 0) {
+                const percentage = (count / (playerStats.totalGames || 1) * 100).toFixed(1);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${handName}</strong></td>
+                    <td>${count}回</td>
+                    <td>${percentage}%</td>
+                `;
+                tbody.appendChild(row);
+            }
+        });
+        
+        // 役の記録がない場合はスキップ
+        if (tbody.children.length === 0) {
+            return;
+        }
+        
+        handsTable.appendChild(tbody);
+        playerSection.appendChild(handsTable);
+        allPlayersHandsList.appendChild(playerSection);
+    });
+    
+    // 役の記録がないプレイヤーがいる場合
+    if (allPlayersHandsList.children.length === 0) {
+        allPlayersHandsList.innerHTML = '<p class="no-stats-message">まだ他のプレイヤーの役の記録がありません。</p>';
+    }
 }
 
 /**
