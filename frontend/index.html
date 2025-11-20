@@ -30,6 +30,7 @@
                 <div class="button-group">
                     <button id="create-room-btn" class="btn btn-primary">ルームを作成</button>
                     <button id="show-hands-lobby-btn" class="btn btn-secondary">役と確率を見る</button>
+                    <button id="show-all-players-hands-btn" class="btn btn-secondary">全プレイヤーの役の記録</button>
                 </div>
 
                 <div class="divider">
@@ -43,6 +44,17 @@
 
                 <div class="button-group">
                     <button id="join-room-btn" class="btn btn-secondary">ルームに参加</button>
+                </div>
+                
+                <!-- 全プレイヤーの役の記録セクション -->
+                <div id="all-players-hands-section" class="all-players-hands-section" style="display: none;">
+                    <div class="section-header">
+                        <h3>全プレイヤーの役の記録</h3>
+                        <button id="close-all-players-hands-btn" class="btn btn-small btn-secondary">閉じる</button>
+                    </div>
+                    <div id="all-players-hands-list">
+                        <!-- 全プレイヤーの役の記録がここに動的に追加されます -->
+                    </div>
                 </div>
             </div>
 
@@ -280,12 +292,6 @@
                                     <!-- 役の統計がここに動的に追加されます -->
                                 </tbody>
                             </table>
-                        </div>
-                        <div class="stats-all-players-hands">
-                            <h3>全プレイヤーの役の記録</h3>
-                            <div id="all-players-hands-list">
-                                <!-- 全プレイヤーの役の記録がここに動的に追加されます -->
-                            </div>
                         </div>
                     </div>
                 </div>

@@ -929,15 +929,24 @@ header h1 {
     border-bottom: none;
 }
 
-/* 全プレイヤーの役の記録 */
-.stats-all-players-hands {
+/* 全プレイヤーの役の記録（ルーム作成画面） */
+.all-players-hands-section {
     margin-top: 40px;
-    padding-top: 30px;
-    border-top: 2px solid #e0e0e0;
+    padding: 30px;
+    background: linear-gradient(135deg, #f9f9f9, #f0f0f0);
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
 }
 
-.stats-all-players-hands h3 {
+.all-players-hands-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+}
+
+.all-players-hands-section h3 {
+    margin: 0;
     color: #667eea;
     font-size: 1.3rem;
 }

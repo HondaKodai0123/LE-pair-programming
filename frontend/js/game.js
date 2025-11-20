@@ -223,9 +223,9 @@ function initializeSocket() {
     socket.on('all_stats_response', (data) => {
         console.log('全戦績を取得:', data);
         cachedAllStats = data.stats || {};
-        // 統計モーダルが表示されている場合は更新
-        const statsModal = document.getElementById('stats-modal');
-        if (statsModal && (statsModal.style.display === 'block' || statsModal.classList.contains('show'))) {
+        // 全プレイヤーの役の記録セクションが表示されている場合は更新
+        const allPlayersHandsSection = document.getElementById('all-players-hands-section');
+        if (allPlayersHandsSection && allPlayersHandsSection.style.display === 'block') {
             // 全プレイヤーの役の記録を更新
             displayAllPlayersHandsRecords();
         }
@@ -422,6 +422,22 @@ function setupEventListeners() {
             cachedAllStats = {};
         }
     });
+
+    // 全プレイヤーの役の記録を表示するボタン（ルーム作成画面）
+    const showAllPlayersHandsBtn = document.getElementById('show-all-players-hands-btn');
+    if (showAllPlayersHandsBtn) {
+        showAllPlayersHandsBtn.addEventListener('click', () => {
+            showAllPlayersHandsSection();
+        });
+    }
+
+    // 全プレイヤーの役の記録セクションを閉じるボタン
+    const closeAllPlayersHandsBtn = document.getElementById('close-all-players-hands-btn');
+    if (closeAllPlayersHandsBtn) {
+        closeAllPlayersHandsBtn.addEventListener('click', () => {
+            hideAllPlayersHandsSection();
+        });
+    }
 }
 
 /**
@@ -1276,9 +1292,6 @@ function showStatsModal() {
                     handsList.appendChild(row);
                 }
             });
-            
-            // 全プレイヤーの役の記録を表示
-            displayAllPlayersHandsRecords();
         } else {
             // 統計データがない場合
             noStatsMessage.style.display = 'block';
@@ -1389,6 +1402,27 @@ function displayAllPlayersHandsRecords() {
     // 役の記録がないプレイヤーがいる場合
     if (allPlayersHandsList.children.length === 0) {
         allPlayersHandsList.innerHTML = '<p class="no-stats-message">まだ他のプレイヤーの役の記録がありません。</p>';
+    }
+}
+
+/**
+ * 全プレイヤーの役の記録セクションを表示
+ */
+function showAllPlayersHandsSection() {
+    const section = document.getElementById('all-players-hands-section');
+    if (section) {
+        section.style.display = 'block';
+        displayAllPlayersHandsRecords();
+    }
+}
+
+/**
+ * 全プレイヤーの役の記録セクションを非表示
+ */
+function hideAllPlayersHandsSection() {
+    const section = document.getElementById('all-players-hands-section');
+    if (section) {
+        section.style.display = 'none';
     }
 }
 
