@@ -343,13 +343,15 @@ def handle_exchange_cards(data):
             # 各プレイヤーに結果を送信
             for socket_id in game.players:
                 player = game.players[socket_id]
+                winner_status = 'you' if winner_id == socket_id else ('opponent' if winner_id != 'draw' else 'draw')
                 result_data = {
                     'your_result': game.results[socket_id],
                     'opponent_result': game.results[[sid for sid in game.players.keys() if sid != socket_id][0]],
-                    'winner': 'you' if winner_id == socket_id else ('opponent' if winner_id != 'draw' else 'draw'),
+                    'winner': winner_status,
                     'game_state': game.get_state(),
                     'player_name': player['name']  # プレイヤー名を含める
                 }
+                print(f'ゲーム結果を送信: socket_id={socket_id}, player_name={player["name"]}, winner={winner_status}')
                 socketio.emit('game_result', result_data, room=socket_id)
         
         socketio.start_background_task(send_result_after_delay)
