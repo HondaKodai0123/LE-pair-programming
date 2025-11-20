@@ -957,13 +957,10 @@ header h1 {
 
 /* 全プレイヤーの役の記録モーダル */
 #all-players-hands-list {
-    padding: 20px;
-}
-
-#all-players-hands-list {
     display: flex;
     flex-direction: column;
     gap: 30px;
+    padding: 20px;
 }
 
 .player-hands-section {
