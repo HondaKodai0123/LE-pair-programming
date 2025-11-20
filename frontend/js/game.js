@@ -41,6 +41,7 @@ function initializeSocket() {
         // サーバーから返されたプレイヤー名を設定（確実に設定するため）
         if (data.player_name) {
             currentPlayerName = data.player_name;
+            localStorage.setItem('last_player_name', data.player_name);
             console.log('ルーム作成: currentPlayerNameを設定:', currentPlayerName);
         } else {
             console.warn('ルーム作成: data.player_nameが存在しません', data);
@@ -55,6 +56,7 @@ function initializeSocket() {
         // サーバーから返されたプレイヤー名を設定（確実に設定するため）
         if (data.player_name) {
             currentPlayerName = data.player_name;
+            localStorage.setItem('last_player_name', data.player_name);
             console.log('ルーム参加: currentPlayerNameを設定:', currentPlayerName);
         } else {
             console.warn('ルーム参加: data.player_nameが存在しません', data);
@@ -209,6 +211,7 @@ function setupEventListeners() {
     document.getElementById('create-room-btn').addEventListener('click', () => {
         const playerName = document.getElementById('player-name').value.trim() || 'Player1';
         currentPlayerName = playerName;
+        localStorage.setItem('last_player_name', playerName);
         console.log('ルーム作成ボタンクリック: currentPlayerNameを設定:', currentPlayerName);
         if (playerName && playerName !== 'Player1') {
             savePlayerName(playerName);
@@ -221,6 +224,7 @@ function setupEventListeners() {
         const roomId = document.getElementById('room-id-input').value.trim().toUpperCase();
         const playerName = document.getElementById('player-name').value.trim() || 'Player2';
         currentPlayerName = playerName;
+        localStorage.setItem('last_player_name', playerName);
         console.log('ルーム参加ボタンクリック: currentPlayerNameを設定:', currentPlayerName);
         
         if (!roomId || roomId.length !== 6) {
@@ -963,20 +967,27 @@ function showResultScreen(data) {
     
     // 統計情報を更新
     // サーバーから返されたプレイヤー名を優先的に使用（確実に統計を記録するため）
-    const playerNameForStats = data.player_name || currentPlayerName;
+    // 複数のソースからプレイヤー名を取得を試みる
+    const playerNameForStats = data.player_name || data.your_result?.player_name || currentPlayerName || localStorage.getItem('last_player_name') || '';
     console.log('ゲーム結果受信:', {
         'data.player_name': data.player_name,
+        'data.your_result.player_name': data.your_result?.player_name,
         'currentPlayerName': currentPlayerName,
+        'localStorage.last_player_name': localStorage.getItem('last_player_name'),
         'playerNameForStats': playerNameForStats,
-        'winner': data.winner,
-        'your_result.player_name': data.your_result?.player_name
+        'winner': data.winner
     });
     
     if (playerNameForStats) {
         // サーバーから返されたプレイヤー名でcurrentPlayerNameを更新
         if (data.player_name) {
             currentPlayerName = data.player_name;
+            localStorage.setItem('last_player_name', data.player_name);
             console.log('currentPlayerNameを更新:', currentPlayerName);
+        } else if (data.your_result?.player_name) {
+            currentPlayerName = data.your_result.player_name;
+            localStorage.setItem('last_player_name', data.your_result.player_name);
+            console.log('currentPlayerNameを更新（your_resultから）:', currentPlayerName);
         }
         updatePlayerStats(playerNameForStats, data);
     } else {
@@ -984,7 +995,8 @@ function showResultScreen(data) {
             data, 
             currentPlayerName,
             'data.player_name': data.player_name,
-            'data.your_result': data.your_result
+            'data.your_result': data.your_result,
+            'localStorage.last_player_name': localStorage.getItem('last_player_name')
         });
     }
 }
