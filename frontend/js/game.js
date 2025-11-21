@@ -255,12 +255,17 @@ function initializeSocket() {
                 disableButtonsTimeout = setTimeout(() => {
                     // setTimeout実行時点で、next_exchange_roundイベントが来たかどうかを再確認
                     // 重要: この時点でisWaitingForNextRoundがfalseになっている場合は、next_exchange_roundイベントが既に来ている
-                    if (isWaitingForNextRound && gamePhase === 'draw_phase') {
-                        // まだ次のラウンドが始まっていない場合のみ無効化
+                    // また、最後のラウンドの場合は、all_players_readyイベントの後に結果が表示されるため、ボタンを無効化しない
+                    const isLastRound = currentRound >= maxRounds;
+                    if (isWaitingForNextRound && gamePhase === 'draw_phase' && !isLastRound) {
+                        // まだ次のラウンドが始まっていない場合のみ無効化（最後のラウンドでない場合のみ）
                         console.log('[DEBUG] cards_exchangedイベント - タイムアウト後にボタンを無効化（相手待ち）', {
                             isWaitingForNextRound: isWaitingForNextRound,
                             gamePhase: gamePhase,
                             currentExchangeRound: currentExchangeRound,
+                            currentRound: currentRound,
+                            maxRounds: maxRounds,
+                            isLastRound: isLastRound,
                             timeoutDelay: timeoutDelay
                         });
                         disableExchangeButtons();
@@ -270,6 +275,9 @@ function initializeSocket() {
                             isWaitingForNextRound: isWaitingForNextRound,
                             gamePhase: gamePhase,
                             currentExchangeRound: currentExchangeRound,
+                            currentRound: currentRound,
+                            maxRounds: maxRounds,
+                            isLastRound: isLastRound,
                             timeoutDelay: timeoutDelay
                         });
                     }
@@ -374,12 +382,33 @@ function initializeSocket() {
     socket.on('all_players_ready', (data) => {
         const message = data.message || '全員の交換が完了しました。結果を表示します...';
         showStatus(message, 'info');
-        console.log('全員の交換完了:', data);
+        console.log('[DEBUG] all_players_readyイベント受信:', data);
         // 交換回数表示を更新（all_players_readyイベントには現在のラウンド情報が含まれる場合がある）
         if (data.current_round !== undefined && maxExchanges !== null) {
             currentExchangeRound = data.current_round;
             updateExchangeRoundDisplay();
-            console.log('all_players_readyで交換回数表示を更新: currentExchangeRound=', currentExchangeRound);
+            console.log('[DEBUG] all_players_readyで交換回数表示を更新: currentExchangeRound=', currentExchangeRound);
+        }
+        
+        // 重要: all_players_readyイベントを受信した時点で、cards_exchangedイベントのsetTimeoutをキャンセル
+        // 次のラウンドが始まる可能性があるため、ボタンを無効化しない
+        if (disableButtonsTimeout) {
+            console.log('[DEBUG] all_players_readyイベント - disableButtonsTimeoutをキャンセル（次のラウンドが始まる可能性があるため）');
+            clearTimeout(disableButtonsTimeout);
+            disableButtonsTimeout = null;
+        }
+        
+        // 次のラウンドが始まる可能性があるため、isWaitingForNextRoundをfalseに設定
+        // （next_exchange_roundイベントが来る可能性があるため）
+        if (data.current_round !== undefined && data.max_rounds !== undefined) {
+            const isLastRound = data.current_round >= data.max_rounds;
+            if (!isLastRound) {
+                // 最後のラウンドでない場合、次のラウンドが始まる可能性がある
+                isWaitingForNextRound = false;
+                console.log('[DEBUG] all_players_readyイベント - isWaitingForNextRoundをfalseに設定（次のラウンドが始まる可能性があるため）');
+            } else {
+                console.log('[DEBUG] all_players_readyイベント - 最後のラウンドのため、isWaitingForNextRoundは変更しない');
+            }
         }
     });
 
