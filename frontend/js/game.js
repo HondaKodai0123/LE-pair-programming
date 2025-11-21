@@ -614,8 +614,8 @@ function setupEventListeners() {
         }
         
         // インデックスに対応するカードを確認
-        const cardsToExchange = indices.map(i => playerHand[i] ? `${playerHand[i].suit}${playerHand[i].label}` : 'undefined');
-        console.log('[DEBUG] 交換するカード:', cardsToExchange);
+        const cardsToExchangeStrings = indices.map(i => playerHand[i] ? `${playerHand[i].suit}${playerHand[i].label}` : 'undefined');
+        console.log('[DEBUG] 交換するカード（文字列）:', cardsToExchangeStrings);
         const cardsToExchange = indices.map(idx => {
             if (idx >= 0 && idx < playerHand.length) {
                 return playerHand[idx];
