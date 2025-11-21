@@ -278,27 +278,45 @@ def handle_disconnect():
 @socketio.on('create_room')
 def handle_create_room(data):
     """ルーム作成"""
-    import random
-    import string
-    
-    room_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-    player_name = data.get('player_name', 'Player1')
-    
-    # ゲームルームを作成
-    game = GameRoom(room_id)
-    games[room_id] = game
-    
-    # プレイヤーを追加
-    game.add_player(request.sid, player_name)
-    game.creator_socket_id = request.sid  # ルーム作成者のsocket_idを保存
-    join_room(room_id)
-    
-    emit('room_created', {
-        'room_id': room_id,
-        'game_state': game.get_state(),
-        'player_name': player_name
-    })
-    print(f'Room created: {room_id}')
+    try:
+        import random
+        import string
+        
+        print(f'[DEBUG] create_roomイベント受信: socket_id={request.sid}, data={data}')
+        
+        room_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        player_name = data.get('player_name', 'Player1')
+        
+        print(f'[DEBUG] ルームを作成します: room_id={room_id}, player_name={player_name}')
+        
+        # ゲームルームを作成
+        game = GameRoom(room_id)
+        games[room_id] = game
+        
+        # プレイヤーを追加
+        if not game.add_player(request.sid, player_name):
+            print(f'[DEBUG] ルーム作成失敗: プレイヤーの追加に失敗しました socket_id={request.sid}')
+            emit('error', {'message': 'ルーム作成に失敗しました。プレイヤーの追加に失敗しました。'})
+            return
+        
+        game.creator_socket_id = request.sid  # ルーム作成者のsocket_idを保存
+        join_room(room_id)
+        print(f'[DEBUG] プレイヤーをルームに参加させました: socket_id={request.sid}, room_id={room_id}')
+        
+        response_data = {
+            'room_id': room_id,
+            'game_state': game.get_state(),
+            'player_name': player_name
+        }
+        print(f'[DEBUG] room_createdイベントを送信: {response_data}')
+        emit('room_created', response_data)
+        print(f'[DEBUG] Room created successfully: room_id={room_id}, player_name={player_name}')
+    except Exception as e:
+        import traceback
+        error_msg = f'ルーム作成中にエラーが発生しました: {str(e)}'
+        print(f'[DEBUG] ルーム作成エラー: {error_msg}')
+        print(f'[DEBUG] トレースバック: {traceback.format_exc()}')
+        emit('error', {'message': error_msg})
 
 
 @socketio.on('join_room')
