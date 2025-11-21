@@ -23,15 +23,28 @@ const SERVER_URL = window.location.origin;
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[DEBUG] ========== DOMContentLoaded開始 ==========');
+    console.log('[DEBUG] ページ読み込み完了');
+    
     // 既存のlocalStorageの戦績をリセット（サーバー側管理に移行）
     if (localStorage.getItem('poker_player_stats')) {
         console.log('既存のlocalStorageの戦績をリセットします（サーバー側管理に移行）');
         localStorage.removeItem('poker_player_stats');
     }
     
+    console.log('[DEBUG] initializeSocket呼び出し前');
     initializeSocket();
+    console.log('[DEBUG] initializeSocket呼び出し後');
+    
+    console.log('[DEBUG] setupEventListeners呼び出し前');
     setupEventListeners();
+    console.log('[DEBUG] setupEventListeners呼び出し後');
+    
+    console.log('[DEBUG] loadPlayerNames呼び出し前');
     loadPlayerNames();
+    console.log('[DEBUG] loadPlayerNames呼び出し後');
+    
+    console.log('[DEBUG] ========== DOMContentLoaded完了 ==========');
 });
 
 /**
@@ -438,35 +451,67 @@ function initializeSocket() {
  */
 function setupEventListeners() {
     // ルーム作成
-    document.getElementById('create-room-btn').addEventListener('click', () => {
-        try {
-            const playerName = document.getElementById('player-name').value.trim() || 'Player1';
-            currentPlayerName = playerName;
-            localStorage.setItem('last_player_name', playerName);
-            console.log('[DEBUG] ルーム作成ボタンクリック:', {
-                playerName: playerName,
-                currentPlayerName: currentPlayerName,
-                socketConnected: socket.connected,
-                socketId: socket.id
-            });
+    const createRoomBtn = document.getElementById('create-room-btn');
+    if (!createRoomBtn) {
+        console.error('[DEBUG] create-room-btnが見つかりません');
+    } else {
+        console.log('[DEBUG] create-room-btnのイベントリスナーを設定しました');
+        createRoomBtn.addEventListener('click', () => {
+            console.log('[DEBUG] ========== ルーム作成ボタンクリック開始 ==========');
+            console.log('[DEBUG] socketオブジェクト:', socket);
+            console.log('[DEBUG] socket.connected:', socket ? socket.connected : 'socket is null');
+            console.log('[DEBUG] socket.id:', socket ? socket.id : 'socket is null');
             
-            if (!socket.connected) {
-                console.error('[DEBUG] Socket.IOが接続されていません');
-                showStatus('サーバーに接続されていません。ページをリロードしてください。', 'error');
-                return;
+            try {
+                if (!socket) {
+                    console.error('[DEBUG] socketオブジェクトが定義されていません');
+                    showStatus('Socket.IOが初期化されていません。ページをリロードしてください。', 'error');
+                    return;
+                }
+                
+                const playerName = document.getElementById('player-name').value.trim() || 'Player1';
+                currentPlayerName = playerName;
+                localStorage.setItem('last_player_name', playerName);
+                console.log('[DEBUG] ルーム作成ボタンクリック:', {
+                    playerName: playerName,
+                    currentPlayerName: currentPlayerName,
+                    socketConnected: socket.connected,
+                    socketId: socket.id,
+                    SERVER_URL: SERVER_URL
+                });
+                
+                if (!socket.connected) {
+                    console.error('[DEBUG] Socket.IOが接続されていません');
+                    console.error('[DEBUG] Socket.IO接続状態を確認:', {
+                        connected: socket.connected,
+                        disconnected: socket.disconnected,
+                        id: socket.id
+                    });
+                    showStatus('サーバーに接続されていません。ページをリロードしてください。', 'error');
+                    return;
+                }
+                
+                if (playerName && playerName !== 'Player1') {
+                    savePlayerName(playerName);
+                }
+                
+                const emitData = { player_name: playerName };
+                console.log('[DEBUG] create_roomイベントを送信:', emitData);
+                console.log('[DEBUG] socket.emit呼び出し前');
+                socket.emit('create_room', emitData);
+                console.log('[DEBUG] socket.emit呼び出し後');
+            } catch (error) {
+                console.error('[DEBUG] ルーム作成ボタンクリックエラー:', error);
+                console.error('[DEBUG] エラーの詳細:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                showStatus('ルーム作成中にエラーが発生しました: ' + error.message, 'error');
             }
-            
-            if (playerName && playerName !== 'Player1') {
-                savePlayerName(playerName);
-            }
-            
-            console.log('[DEBUG] create_roomイベントを送信:', { player_name: playerName });
-            socket.emit('create_room', { player_name: playerName });
-        } catch (error) {
-            console.error('[DEBUG] ルーム作成ボタンクリックエラー:', error);
-            showStatus('ルーム作成中にエラーが発生しました: ' + error.message, 'error');
-        }
-    });
+            console.log('[DEBUG] ========== ルーム作成ボタンクリック終了 ==========');
+        });
+    }
 
     // ルーム参加
     document.getElementById('join-room-btn').addEventListener('click', () => {
