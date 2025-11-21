@@ -463,13 +463,28 @@ function initializeSocket() {
  * イベントリスナーの設定
  */
 function setupEventListeners() {
+    console.log('[DEBUG] ========== setupEventListeners開始 ==========');
+    console.log('[DEBUG] create-room-btn要素:', document.getElementById('create-room-btn'));
+    
     // ルーム作成
     const createRoomBtn = document.getElementById('create-room-btn');
     if (!createRoomBtn) {
         console.error('[DEBUG] create-room-btnが見つかりません');
+        console.error('[DEBUG] ページの読み込みが完了していない可能性があります');
+        // DOMが読み込まれるまで待つ
+        setTimeout(() => {
+            const retryBtn = document.getElementById('create-room-btn');
+            if (retryBtn) {
+                console.log('[DEBUG] create-room-btnを再取得しました');
+                setupCreateRoomButton(retryBtn);
+            } else {
+                console.error('[DEBUG] create-room-btnが見つかりません（再試行後も）');
+            }
+        }, 100);
     } else {
-        console.log('[DEBUG] create-room-btnのイベントリスナーを設定しました');
-        createRoomBtn.addEventListener('click', () => {
+        console.log('[DEBUG] create-room-btnのイベントリスナーを設定します');
+        setupCreateRoomButton(createRoomBtn);
+    }
             console.log('[DEBUG] ========== ルーム作成ボタンクリック開始 ==========');
             console.log('[DEBUG] socketオブジェクト:', socket);
             console.log('[DEBUG] socket.connected:', socket ? socket.connected : 'socket is null');
@@ -524,7 +539,15 @@ function setupEventListeners() {
             }
             console.log('[DEBUG] ========== ルーム作成ボタンクリック終了 ==========');
         });
-    }
+    console.log('[DEBUG] ルーム作成ボタンのイベントリスナーを設定しました');
+}
+
+/**
+ * ルーム作成ボタンのイベントリスナーを設定
+ */
+function setupCreateRoomButton(button) {
+    console.log('[DEBUG] setupCreateRoomButton呼び出し: button=', button);
+    button.addEventListener('click', () => {
 
     // ルーム参加
     document.getElementById('join-room-btn').addEventListener('click', () => {
@@ -753,6 +776,8 @@ function setupEventListeners() {
     document.getElementById('select-exchange-3').addEventListener('click', () => {
         selectExchangeCount(3);
     });
+    
+    console.log('[DEBUG] ========== setupEventListeners完了 ==========');
 }
 
 /**
