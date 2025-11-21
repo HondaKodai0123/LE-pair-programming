@@ -230,6 +230,9 @@ function initializeSocket() {
                 
                 // 次のラウンドが始まらない場合は、相手の交換待ちなので無効化する
                 // ただし、next_exchange_roundイベントが来る可能性があるので、少し待つ
+                // 注意: 2ターン目以降は、相手が既に交換を完了している可能性があるため、
+                // より長い時間待つ必要がある
+                const timeoutDelay = currentExchangeRound >= maxExchanges ? 1000 : 500;
                 disableButtonsTimeout = setTimeout(() => {
                     if (isWaitingForNextRound) {
                         // まだ次のラウンドが始まっていない場合のみ無効化
@@ -240,7 +243,7 @@ function initializeSocket() {
                         console.log('cards_exchangedイベント - タイムアウト後も次のラウンドが始まっているため、ボタンは無効化しない');
                     }
                     disableButtonsTimeout = null;
-                }, 500); // next_exchange_roundイベントが来るまで待つ
+                }, timeoutDelay); // next_exchange_roundイベントが来るまで待つ
             }, 300); // フェードアウトアニメーションの時間
         } else {
             // コンテナがない場合は通常通り処理
@@ -272,6 +275,9 @@ function initializeSocket() {
             
             // 次のラウンドが始まらない場合は、相手の交換待ちなので無効化する
             // ただし、next_exchange_roundイベントが来る可能性があるので、少し待つ
+            // 注意: 2ターン目以降は、相手が既に交換を完了している可能性があるため、
+            // より長い時間待つ必要がある
+            const timeoutDelay = currentExchangeRound >= maxExchanges ? 1000 : 500;
             disableButtonsTimeout = setTimeout(() => {
                 if (isWaitingForNextRound) {
                     // まだ次のラウンドが始まっていない場合のみ無効化
@@ -282,7 +288,7 @@ function initializeSocket() {
                     console.log('cards_exchangedイベント - タイムアウト後も次のラウンドが始まっているため、ボタンは無効化しない');
                 }
                 disableButtonsTimeout = null;
-            }, 500); // next_exchange_roundイベントが来るまで待つ
+            }, timeoutDelay); // next_exchange_roundイベントが来るまで待つ
         }
     });
 

@@ -545,8 +545,9 @@ def handle_exchange_cards(data):
             socketio.emit('next_exchange_round', next_round_data, room=room_id)
     else:
         # 相手が交換中であることを通知
-        print(f'[DEBUG] 相手の交換を待っています。waiting_for_opponentイベントを送信')
-        socketio.emit('waiting_for_opponent', game.get_state(), room=room_id)
+        # 交換を完了したプレイヤーにのみ送信（相手には送信しない）
+        print(f'[DEBUG] 相手の交換を待っています。waiting_for_opponentイベントを送信: socket_id={request.sid}')
+        emit('waiting_for_opponent', game.get_state())
 
 
 @socketio.on('reset_game')
