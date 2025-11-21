@@ -269,14 +269,22 @@ function initializeSocket() {
 
     // 次の交換ラウンド開始
     socket.on('next_exchange_round', (data) => {
-        console.log('次の交換ラウンド開始:', data);
+        console.log('[DEBUG] next_exchange_roundイベント受信:', {
+            message: data.message,
+            current_round: data.current_round,
+            max_rounds: data.max_rounds,
+            before_isWaitingForNextRound: isWaitingForNextRound,
+            before_currentExchangeRound: currentExchangeRound,
+            before_maxExchanges: maxExchanges
+        });
         
         // 次のラウンドフラグをリセット
         isWaitingForNextRound = false;
+        console.log('[DEBUG] isWaitingForNextRoundをfalseにリセット');
         
         // 既存のsetTimeoutをキャンセル（disableExchangeButtonsが呼ばれないようにする）
         if (disableButtonsTimeout) {
-            console.log('next_exchange_roundイベント - 既存のdisableButtonsTimeoutをキャンセル');
+            console.log('[DEBUG] next_exchange_roundイベント - 既存のdisableButtonsTimeoutをキャンセル');
             clearTimeout(disableButtonsTimeout);
             disableButtonsTimeout = null;
         }
@@ -444,26 +452,39 @@ function setupEventListeners() {
 
     // カード交換
     document.getElementById('exchange-btn').addEventListener('click', () => {
-        console.log('交換ボタンクリック');
-        console.log('選択中のカードID:', selectedCardIds);
-        console.log('現在のplayerHand:', playerHand);
+        console.log('[DEBUG] 交換ボタンクリック:', {
+            selectedCardIds: [...selectedCardIds],
+            selectedCardIndices: [...selectedCardIndices],
+            playerHand: playerHand.map(c => `${c.suit}${c.label}`),
+            currentExchangeRound: currentExchangeRound,
+            maxExchanges: maxExchanges,
+            isWaitingForNextRound: isWaitingForNextRound
+        });
         
         // 交換前の手札を保存（まだ保存されていない場合）
         if (playerHandBeforeExchange.length === 0) {
             playerHandBeforeExchange = [...playerHand];
+            console.log('[DEBUG] 交換前の手札を保存:', playerHandBeforeExchange.map(c => `${c.suit}${c.label}`));
         }
         // 交換前の手札を選択不可の状態で表示
         renderPlayerCardsBefore();
         
         const indices = getSelectedCardIndices();
-        console.log('取得したインデックス:', indices);
+        console.log('[DEBUG] 交換するカードのインデックスを取得:', {
+            indices: indices,
+            selectedCardIds: [...selectedCardIds],
+            playerHand: playerHand.map(c => `${c.suit}${c.label}`)
+        });
         
         if (indices.length === 0) {
+            console.log('[DEBUG] 交換ボタンクリック失敗: カードが選択されていません');
             showStatus('交換するカードを選択してください', 'warning');
             return;
         }
         
         // インデックスに対応するカードを確認
+        const cardsToExchange = indices.map(i => playerHand[i] ? `${playerHand[i].suit}${playerHand[i].label}` : 'undefined');
+        console.log('[DEBUG] 交換するカード:', cardsToExchange);
         const cardsToExchange = indices.map(idx => {
             if (idx >= 0 && idx < playerHand.length) {
                 return playerHand[idx];
@@ -484,20 +505,29 @@ function setupEventListeners() {
 
     // 全て交換
     document.getElementById('exchange-all-btn').addEventListener('click', () => {
+        console.log('[DEBUG] 全て交換ボタンクリック:', {
+            playerHand: playerHand.map(c => `${c.suit}${c.label}`),
+            currentExchangeRound: currentExchangeRound,
+            maxExchanges: maxExchanges
+        });
+        
         // 交換前の手札を保存（まだ保存されていない場合）
         if (playerHandBeforeExchange.length === 0) {
             playerHandBeforeExchange = [...playerHand];
+            console.log('[DEBUG] 交換前の手札を保存:', playerHandBeforeExchange.map(c => `${c.suit}${c.label}`));
         }
         // 交換前の手札を選択不可の状態で表示
         renderPlayerCardsBefore();
         
         // 全てのカードのインデックス（0, 1, 2, 3, 4）
         const allIndices = playerHand.map((_, index) => index);
+        console.log('[DEBUG] 全てのカードを交換します。インデックス:', allIndices);
         
         socket.emit('exchange_cards', {
             room_id: currentRoomId,
             card_indices: allIndices
         });
+        console.log('[DEBUG] exchange_cardsイベントを送信: card_indices=', allIndices);
         
         selectedCardIds = [];
         selectedCardIndices = [];
@@ -505,10 +535,17 @@ function setupEventListeners() {
 
     // 交換しない
     document.getElementById('skip-exchange-btn').addEventListener('click', () => {
+        console.log('[DEBUG] 交換しないボタンクリック:', {
+            playerHand: playerHand.map(c => `${c.suit}${c.label}`),
+            currentExchangeRound: currentExchangeRound,
+            maxExchanges: maxExchanges
+        });
+        
         socket.emit('exchange_cards', {
             room_id: currentRoomId,
             card_indices: []
         });
+        console.log('[DEBUG] exchange_cardsイベントを送信（スキップ）: card_indices=[]');
     });
 
     // もう一度プレイ
@@ -1067,6 +1104,14 @@ function createCardBackElement() {
  * カード選択のトグル（並び替え対応版）
  */
 function toggleCardSelection(cardElement, cardId, currentIndex) {
+    console.log('[DEBUG] toggleCardSelection開始:', {
+        cardId: cardId,
+        currentIndex: currentIndex,
+        selectedCardIds: [...selectedCardIds],
+        selectedCardIndices: [...selectedCardIndices],
+        playerHand: playerHand.map(c => `${c.suit}${c.label}`)
+    });
+    
     const idIndex = selectedCardIds.indexOf(cardId);
     const indexIndex = selectedCardIndices.indexOf(currentIndex);
     
@@ -1076,7 +1121,17 @@ function toggleCardSelection(cardElement, cardId, currentIndex) {
             selectedCardIds.push(cardId);
             selectedCardIndices.push(currentIndex);
             cardElement.classList.add('selected');
-            console.log('カード選択:', cardId, 'インデックス:', currentIndex);
+            const card = playerHand[currentIndex];
+            console.log('[DEBUG] カードを選択しました:', {
+                cardId: cardId,
+                card: card ? `${card.suit}${card.label}` : 'undefined',
+                index: currentIndex,
+                selectedCount: selectedCardIds.length,
+                selectedCardIds: [...selectedCardIds],
+                selectedCardIndices: [...selectedCardIndices]
+            });
+        } else {
+            console.log('[DEBUG] カード選択失敗: 最大選択数に達しています (5枚)');
         }
     } else {
         // 選択されている場合、選択から削除
@@ -1085,8 +1140,17 @@ function toggleCardSelection(cardElement, cardId, currentIndex) {
             selectedCardIndices.splice(indexIndex, 1);
         }
         cardElement.classList.remove('selected');
-        console.log('カード選択解除:', cardId, 'インデックス:', currentIndex);
+        const card = playerHand[currentIndex];
+        console.log('[DEBUG] カード選択を解除しました:', {
+            cardId: cardId,
+            card: card ? `${card.suit}${card.label}` : 'undefined',
+            index: currentIndex,
+            selectedCount: selectedCardIds.length,
+            selectedCardIds: [...selectedCardIds],
+            selectedCardIndices: [...selectedCardIndices]
+        });
     }
+}
     
     console.log('選択中のカードID:', selectedCardIds);
     console.log('選択中のカードインデックス:', selectedCardIndices);

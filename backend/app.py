@@ -79,30 +79,46 @@ class GameRoom:
     
     def exchange_cards(self, socket_id, card_indices):
         """カードを交換する"""
+        print(f'[DEBUG] exchange_cards開始: socket_id={socket_id}, card_indices={card_indices}, current_round={self.current_exchange_round}')
+        
         if socket_id not in self.players:
+            print(f'[DEBUG] exchange_cards失敗: プレイヤーが見つかりません socket_id={socket_id}')
             return False
         
         player = self.players[socket_id]
         
         # 既にこのラウンドで交換済みの場合はエラー
         if player['ready']:
-            print(f'警告: プレイヤー {socket_id} は既にこのラウンドで交換済みです')
+            print(f'[DEBUG] exchange_cards失敗: プレイヤー {socket_id} ({player["name"]}) は既にこのラウンドで交換済みです (ready={player["ready"]}, current_round={self.current_exchange_round})')
             return False
+        
+        # 交換前の手札をログ出力
+        hand_before = [f"{c['suit']}{c['label']}" for c in player['hand']]
+        print(f'[DEBUG] 交換前の手札: {hand_before}')
+        print(f'[DEBUG] 交換するカードのインデックス: {card_indices}')
+        if card_indices:
+            cards_to_exchange = [f"{player['hand'][i]['suit']}{player['hand'][i]['label']}" for i in card_indices if 0 <= i < len(player['hand'])]
+            print(f'[DEBUG] 交換するカード: {cards_to_exchange}')
         
         # 指定されたカードを捨てて新しいカードを引く
         for index in sorted(card_indices, reverse=True):
             if 0 <= index < len(player['hand']):
-                player['hand'].pop(index)
+                removed_card = player['hand'].pop(index)
+                print(f'[DEBUG] カードを捨てました: インデックス={index}, カード={removed_card["suit"]}{removed_card["label"]}')
         
         # 新しいカードを引く
         new_cards = self.deck.draw(len(card_indices))
+        new_cards_str = [f"{c['suit']}{c['label']}" for c in new_cards]
+        print(f'[DEBUG] 新しいカードを引きました: {new_cards_str}, 残りデッキ={len(self.deck.cards)}枚')
         player['hand'].extend(new_cards)
         
         # 交換後もクライアント側と同じ並び替えロジックを適用
         player['hand'] = sort_hand(player['hand'])
+        hand_after = [f"{c['suit']}{c['label']}" for c in player['hand']]
+        print(f'[DEBUG] 交換後の手札（ソート後）: {hand_after}')
         
         player['ready'] = True
-        print(f'プレイヤー {socket_id} が交換しました。ready={player["ready"]}, current_round={self.current_exchange_round}')
+        print(f'[DEBUG] exchange_cards完了: socket_id={socket_id}, player_name={player["name"]}, ready={player["ready"]}, current_round={self.current_exchange_round}')
         return True
     
     def set_max_exchanges(self, max_exchanges):
@@ -116,14 +132,19 @@ class GameRoom:
     
     def increment_exchange_round(self):
         """交換ラウンドを増やす"""
+        old_round = self.current_exchange_round
         self.current_exchange_round += 1
+        print(f'[DEBUG] increment_exchange_round: {old_round} -> {self.current_exchange_round}, max_exchanges={self.max_exchanges}')
+        
         # 全てのプレイヤーのready状態をリセット
         for socket_id, player in self.players.items():
+            old_ready = player['ready']
             player['ready'] = False
-            print(f'プレイヤー {socket_id} ({player["name"]}) のreadyフラグをFalseにリセット')
-        # 交換回数をリセット
-        self.exchange_count = {socket_id: 0 for socket_id in self.players}
-        print(f'交換ラウンドを増やしました: current_exchange_round={self.current_exchange_round}, 全プレイヤーのreadyをFalseにリセット')
+            print(f'[DEBUG] プレイヤー {socket_id} ({player["name"]}) のreadyフラグをリセット: {old_ready} -> False')
+        
+        # 交換回数をリセット（ただし、これは累積カウントなのでリセットしない方が良いかも？）
+        # self.exchange_count = {socket_id: 0 for socket_id in self.players}
+        print(f'[DEBUG] increment_exchange_round完了: current_exchange_round={self.current_exchange_round}, 全プレイヤーのreadyをFalseにリセット')
     
     def is_exchange_rounds_complete(self):
         """全ての交換ラウンドが完了したか"""
@@ -131,7 +152,10 @@ class GameRoom:
     
     def all_players_ready(self):
         """全プレイヤーがカード交換を終えたか"""
-        return all(p['ready'] for p in self.players.values())
+        ready_status = {sid: p['ready'] for sid, p in self.players.items()}
+        all_ready = all(p['ready'] for p in self.players.values())
+        print(f'[DEBUG] all_players_ready: {ready_status} -> {all_ready}, current_round={self.current_exchange_round}')
+        return all_ready
     
     def evaluate_hands(self):
         """全プレイヤーの手札を評価"""
@@ -399,27 +423,28 @@ def handle_exchange_cards(data):
     # 現在のプレイヤーの状態を確認
     if request.sid in game.players:
         player = game.players[request.sid]
-        print(f'交換リクエスト: socket_id={request.sid}, player_name={player["name"]}, ready={player["ready"]}, current_round={game.current_exchange_round}, max_exchanges={game.max_exchanges}')
+        print(f'[DEBUG] 交換リクエスト: socket_id={request.sid}, player_name={player["name"]}, ready={player["ready"]}, current_round={game.current_exchange_round}, max_exchanges={game.max_exchanges}, card_indices={card_indices}')
         # 全プレイヤーの状態も確認
         for sid, p in game.players.items():
-            print(f'  プレイヤー状態: {sid} ({p["name"]}) ready={p["ready"]}')
+            print(f'[DEBUG] プレイヤー状態: socket_id={sid}, name={p["name"]}, ready={p["ready"]}, hand={[f"{c["suit"]}{c["label"]}" for c in p["hand"]]}')
     
     if not game.exchange_cards(request.sid, card_indices):
+        print(f'[DEBUG] カード交換処理が失敗しました: socket_id={request.sid}')
         emit('error', {'message': 'カード交換に失敗しました。既にこのラウンドで交換済みの可能性があります。'})
-        print(f'交換失敗: socket_id={request.sid}')
         return
     
     # プレイヤーの交換回数を増やす
     if request.sid not in game.exchange_count:
         game.exchange_count[request.sid] = 0
     game.exchange_count[request.sid] += 1
+    print(f'[DEBUG] プレイヤーの交換回数を更新: socket_id={request.sid}, exchange_count={game.exchange_count[request.sid]}')
     
     # 交換後の手札を送信
     player = game.players[request.sid]
     remaining_cards_list = game.get_remaining_cards_list(request.sid)
     remaining_cards_count = len(remaining_cards_list)
     
-    emit('cards_exchanged', {
+    emit_data = {
         'hand': player['hand'],
         'game_state': game.get_state(),
         'remaining_cards': remaining_cards_count,
@@ -427,22 +452,27 @@ def handle_exchange_cards(data):
         'current_exchange_round': game.current_exchange_round + 1,  # 表示用に+1（0ベースから1ベースに変換）
         'exchange_count': game.exchange_count.get(request.sid, 0),
         'max_exchanges': game.max_exchanges
-    })
+    }
+    print(f'[DEBUG] cards_exchangedイベントを送信: socket_id={request.sid}, current_round={emit_data["current_exchange_round"]}, exchange_count={emit_data["exchange_count"]}, max_exchanges={emit_data["max_exchanges"]}, hand={[f"{c["suit"]}{c["label"]}" for c in player["hand"]]}')
+    emit('cards_exchanged', emit_data)
     
     # 全員が交換を終えたら次のラウンドまたは結果判定
     all_ready = game.all_players_ready()
-    print(f'全員の交換完了チェック: all_ready={all_ready}, current_round={game.current_exchange_round}, players_ready={[(sid, p["ready"]) for sid, p in game.players.items()]}')
+    print(f'[DEBUG] 全員の交換完了チェック: all_ready={all_ready}, current_round={game.current_exchange_round}, players_ready={[(sid, p["ready"]) for sid, p in game.players.items()]}')
     
     if all_ready:
         # 全員が交換を終えたことを通知
-        socketio.emit('all_players_ready', {
+        all_ready_data = {
             'message': f'全員の交換が完了しました（{game.current_exchange_round + 1}/{game.max_exchanges}回目）',
             'current_round': game.current_exchange_round + 1,
             'max_rounds': game.max_exchanges
-        }, room=room_id)
+        }
+        print(f'[DEBUG] all_players_readyイベントを送信: {all_ready_data}')
+        socketio.emit('all_players_ready', all_ready_data, room=room_id)
         
         # 指定回数の交換が完了したか確認
         if game.current_exchange_round + 1 >= game.max_exchanges:
+            print(f'[DEBUG] 全ての交換が完了しました。結果を判定します。current_round={game.current_exchange_round + 1}, max_exchanges={game.max_exchanges}')
             # 全ての交換が完了したので結果を判定
             def send_result_after_delay():
                 import time
@@ -476,8 +506,8 @@ def handle_exchange_cards(data):
             socketio.start_background_task(send_result_after_delay)
         else:
             # 次の交換ラウンドに進む
+            print(f'[DEBUG] 次のラウンドに進みます: current_exchange_round={game.current_exchange_round}, max_exchanges={game.max_exchanges}')
             game.increment_exchange_round()
-            print(f'次のラウンドに進みます: current_exchange_round={game.current_exchange_round}, max_exchanges={game.max_exchanges}')
             
             # 次のラウンド開始を通知（increment後なので、current_exchange_roundは既に増えている）
             # 表示用に+1（0ベースから1ベースに変換）
@@ -487,12 +517,12 @@ def handle_exchange_cards(data):
                 'current_round': display_round,  # 表示用に+1
                 'max_rounds': game.max_exchanges
             }
-            print(f'next_exchange_roundイベントを送信: room_id={room_id}, data={next_round_data}')
-            print(f'  全プレイヤーの状態: {[(sid, p["name"], p["ready"]) for sid, p in game.players.items()]}')
+            print(f'[DEBUG] next_exchange_roundイベントを送信: room_id={room_id}, data={next_round_data}')
+            print(f'[DEBUG] 全プレイヤーの状態: {[(sid, p["name"], p["ready"]) for sid, p in game.players.items()]}')
             socketio.emit('next_exchange_round', next_round_data, room=room_id)
-            print(f'next_exchange_roundイベント送信完了')
     else:
         # 相手が交換中であることを通知
+        print(f'[DEBUG] 相手の交換を待っています。waiting_for_opponentイベントを送信')
         socketio.emit('waiting_for_opponent', game.get_state(), room=room_id)
 
 
