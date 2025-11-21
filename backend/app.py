@@ -118,10 +118,12 @@ class GameRoom:
         """交換ラウンドを増やす"""
         self.current_exchange_round += 1
         # 全てのプレイヤーのready状態をリセット
-        for player in self.players.values():
+        for socket_id, player in self.players.items():
             player['ready'] = False
+            print(f'プレイヤー {socket_id} ({player["name"]}) のreadyフラグをFalseにリセット')
         # 交換回数をリセット
         self.exchange_count = {socket_id: 0 for socket_id in self.players}
+        print(f'交換ラウンドを増やしました: current_exchange_round={self.current_exchange_round}, 全プレイヤーのreadyをFalseにリセット')
     
     def is_exchange_rounds_complete(self):
         """全ての交換ラウンドが完了したか"""
@@ -397,10 +399,14 @@ def handle_exchange_cards(data):
     # 現在のプレイヤーの状態を確認
     if request.sid in game.players:
         player = game.players[request.sid]
-        print(f'交換リクエスト: socket_id={request.sid}, ready={player["ready"]}, current_round={game.current_exchange_round}')
+        print(f'交換リクエスト: socket_id={request.sid}, player_name={player["name"]}, ready={player["ready"]}, current_round={game.current_exchange_round}, max_exchanges={game.max_exchanges}')
+        # 全プレイヤーの状態も確認
+        for sid, p in game.players.items():
+            print(f'  プレイヤー状態: {sid} ({p["name"]}) ready={p["ready"]}')
     
     if not game.exchange_cards(request.sid, card_indices):
         emit('error', {'message': 'カード交換に失敗しました。既にこのラウンドで交換済みの可能性があります。'})
+        print(f'交換失敗: socket_id={request.sid}')
         return
     
     # プレイヤーの交換回数を増やす

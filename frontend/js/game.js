@@ -245,12 +245,22 @@ function initializeSocket() {
         
         // 交換ボタンを再有効化（重要：次のラウンドで交換できるようにする）
         enableExchangeButtons();
+        console.log('交換ボタンを再有効化しました');
         
         // ステータスメッセージを表示
         showStatus(data.message || `第${data.current_round}回目の交換を開始してください`, 'info');
         
+        // 交換ボタンの状態を確認
+        const exchangeBtn = document.getElementById('exchange-btn');
+        const exchangeAllBtn = document.getElementById('exchange-all-btn');
+        const skipBtn = document.getElementById('skip-exchange-btn');
+        console.log('交換ボタンの状態:', {
+            'exchange-btn': exchangeBtn ? exchangeBtn.disabled : 'not found',
+            'exchange-all-btn': exchangeAllBtn ? exchangeAllBtn.disabled : 'not found',
+            'skip-exchange-btn': skipBtn ? skipBtn.disabled : 'not found'
+        });
+        
         console.log('次のラウンド開始 - currentExchangeRound:', currentExchangeRound, 'maxExchanges:', maxExchanges);
-        console.log('交換ボタンを再有効化しました');
     });
 
     // ゲーム結果
