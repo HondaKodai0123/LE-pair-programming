@@ -1283,7 +1283,6 @@ function toggleCardSelection(cardElement, cardId, currentIndex) {
             selectedCardIndices: [...selectedCardIndices]
         });
     }
-}
     
     console.log('選択中のカードID:', selectedCardIds);
     console.log('選択中のカードインデックス:', selectedCardIndices);
