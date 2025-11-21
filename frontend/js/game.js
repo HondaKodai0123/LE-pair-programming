@@ -73,9 +73,9 @@ function initializeSocket() {
 
         // 接続イベント
         socket.on('connected', (data) => {
-        console.log('[DEBUG] サーバーに接続しました:', data);
-        showStatus('サーバーに接続しました', 'success');
-    });
+            console.log('[DEBUG] サーバーに接続しました:', data);
+            showStatus('サーバーに接続しました', 'success');
+        });
 
     // ルーム作成成功
     socket.on('room_created', (data) => {
