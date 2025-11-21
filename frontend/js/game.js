@@ -412,26 +412,44 @@ function initializeSocket() {
         renderPlayerCards();
         
         // 交換ボタンを強制的に再有効化（重要：次のラウンドで交換できるようにする）
-        // 即座に有効化してから、setTimeoutでも再度確認
+        // 即座に有効化してから、setTimeoutでも複数回確認
         enableExchangeButtons();
-        console.log('交換ボタンを即座に再有効化しました（next_exchange_roundイベント）');
+        console.log('[DEBUG] 交換ボタンを即座に再有効化しました（next_exchange_roundイベント）');
         
-        // setTimeoutを少し遅らせて、確実に再有効化されるようにする
+        // setTimeoutを少し遅らせて、確実に再有効化されるようにする（複数回実行）
         setTimeout(() => {
+            // gamePhaseを再度確認・設定
+            if (gamePhase !== 'draw_phase') {
+                gamePhase = 'draw_phase';
+                console.log('[DEBUG] gamePhaseを再度draw_phaseに設定しました（setTimeout内）');
+            }
             enableExchangeButtons(); // 念のため再度有効化
-            console.log('交換ボタンを再度有効化しました（next_exchange_roundイベント - setTimeout）');
+            console.log('[DEBUG] 交換ボタンを再度有効化しました（next_exchange_roundイベント - setTimeout 600ms）');
+        }, 600); // cards_exchangedのsetTimeoutより後に実行されるように
+        
+        setTimeout(() => {
+            // gamePhaseを再度確認・設定
+            if (gamePhase !== 'draw_phase') {
+                gamePhase = 'draw_phase';
+                console.log('[DEBUG] gamePhaseを再度draw_phaseに設定しました（setTimeout 1200ms内）');
+            }
+            enableExchangeButtons(); // 念のため再度有効化
+            console.log('[DEBUG] 交換ボタンを再度有効化しました（next_exchange_roundイベント - setTimeout 1200ms）');
             
             // 交換ボタンの状態を確認
             const exchangeBtn = document.getElementById('exchange-btn');
             const exchangeAllBtn = document.getElementById('exchange-all-btn');
             const skipBtn = document.getElementById('skip-exchange-btn');
-            console.log('交換ボタンの状態（setTimeout後）:', {
+            console.log('[DEBUG] 交換ボタンの状態（setTimeout 1200ms後）:', {
                 'exchange-btn': exchangeBtn ? (exchangeBtn.disabled ? 'disabled' : 'enabled') : 'not found',
                 'exchange-all-btn': exchangeAllBtn ? (exchangeAllBtn.disabled ? 'disabled' : 'enabled') : 'not found',
                 'skip-exchange-btn': skipBtn ? (skipBtn.disabled ? 'disabled' : 'enabled') : 'not found',
-                'gamePhase': gamePhase
+                'gamePhase': gamePhase,
+                'isWaitingForNextRound': isWaitingForNextRound,
+                'currentExchangeRound': currentExchangeRound,
+                'maxExchanges': maxExchanges
             });
-        }, 600); // cards_exchangedのsetTimeout（500ms）より後に実行されるように
+        }, 1200); // cards_exchangedのsetTimeout（1500ms）より前に実行されるが、念のため
         
         // ステータスメッセージを表示
         showStatus(data.message || `第${data.current_round}回目の交換を開始してください`, 'info');
