@@ -15,6 +15,7 @@ let currentPlayerName = ''; // 現在のプレイヤー名
 let maxExchanges = null; // 最大交換回数
 let currentExchangeRound = 0; // 現在の交換ラウンド
 let isRoomCreator = false; // ルーム作成者かどうか
+let isWaitingForNextRound = false; // 次のラウンドを待っているかどうか
 
 // サーバーのURL（本番環境では適切に設定）
 const SERVER_URL = window.location.origin;
@@ -165,18 +166,18 @@ function initializeSocket() {
                 renderPlayerCardsWithAnimation(); // アニメーション付きで描画
                 renderPlayerCardsBefore(); // 交換前の手札を表示
                 
-                // 次のラウンドに進む可能性があるので、一旦ボタンを無効化しない
-                // 次のラウンドが始まればenableExchangeButtons()が呼ばれる
+                // 次のラウンド待ちフラグを設定
+                isWaitingForNextRound = true;
+                
                 // 次のラウンドが始まらない場合は、相手の交換待ちなので無効化する
-                const exchangeBtn = document.getElementById('exchange-btn');
-                if (exchangeBtn && !exchangeBtn.disabled) {
-                    // まだ有効な場合は無効化（相手の交換待ち）
-                    disableExchangeButtons();
-                    showStatus('カード交換完了。相手の交換を待っています...', 'info');
-                } else {
-                    // 既に無効化されている場合は、next_exchange_roundイベントで再有効化される
-                    showStatus('カード交換完了。相手の交換を待っています...', 'info');
-                }
+                // ただし、next_exchange_roundイベントが来る可能性があるので、少し待つ
+                setTimeout(() => {
+                    if (isWaitingForNextRound) {
+                        // まだ次のラウンドが始まっていない場合のみ無効化
+                        disableExchangeButtons();
+                        showStatus('カード交換完了。相手の交換を待っています...', 'info');
+                    }
+                }, 500); // next_exchange_roundイベントが来るまで待つ
             }, 300); // フェードアウトアニメーションの時間
         } else {
             // コンテナがない場合は通常通り処理
@@ -197,18 +198,18 @@ function initializeSocket() {
             renderPlayerCards();
             renderPlayerCardsBefore();
             
-            // 次のラウンドに進む可能性があるので、一旦ボタンを無効化しない
-            // 次のラウンドが始まればenableExchangeButtons()が呼ばれる
+            // 次のラウンド待ちフラグを設定
+            isWaitingForNextRound = true;
+            
             // 次のラウンドが始まらない場合は、相手の交換待ちなので無効化する
-            const exchangeBtn = document.getElementById('exchange-btn');
-            if (exchangeBtn && !exchangeBtn.disabled) {
-                // まだ有効な場合は無効化（相手の交換待ち）
-                disableExchangeButtons();
-                showStatus('カード交換完了。相手の交換を待っています...', 'info');
-            } else {
-                // 既に無効化されている場合は、next_exchange_roundイベントで再有効化される
-                showStatus('カード交換完了。相手の交換を待っています...', 'info');
-            }
+            // ただし、next_exchange_roundイベントが来る可能性があるので、少し待つ
+            setTimeout(() => {
+                if (isWaitingForNextRound) {
+                    // まだ次のラウンドが始まっていない場合のみ無効化
+                    disableExchangeButtons();
+                    showStatus('カード交換完了。相手の交換を待っています...', 'info');
+                }
+            }, 500); // next_exchange_roundイベントが来るまで待つ
         }
     });
 
@@ -240,6 +241,9 @@ function initializeSocket() {
     socket.on('next_exchange_round', (data) => {
         console.log('次の交換ラウンド開始:', data);
         
+        // 次のラウンドフラグをリセット
+        isWaitingForNextRound = false;
+        
         // 交換回数情報を更新（必ずここで更新する）
         if (data.current_round !== undefined) {
             currentExchangeRound = data.current_round;
@@ -265,22 +269,25 @@ function initializeSocket() {
         // 手札を再表示（選択可能な状態に）
         renderPlayerCards();
         
-        // 交換ボタンを再有効化（重要：次のラウンドで交換できるようにする）
-        enableExchangeButtons();
-        console.log('交換ボタンを再有効化しました');
+        // 交換ボタンを強制的に再有効化（重要：次のラウンドで交換できるようにする）
+        // setTimeoutを少し遅らせて、確実に再有効化されるようにする
+        setTimeout(() => {
+            enableExchangeButtons();
+            console.log('交換ボタンを再有効化しました（next_exchange_roundイベント）');
+            
+            // 交換ボタンの状態を確認
+            const exchangeBtn = document.getElementById('exchange-btn');
+            const exchangeAllBtn = document.getElementById('exchange-all-btn');
+            const skipBtn = document.getElementById('skip-exchange-btn');
+            console.log('交換ボタンの状態:', {
+                'exchange-btn': exchangeBtn ? exchangeBtn.disabled : 'not found',
+                'exchange-all-btn': exchangeAllBtn ? exchangeAllBtn.disabled : 'not found',
+                'skip-exchange-btn': skipBtn ? skipBtn.disabled : 'not found'
+            });
+        }, 100); // cards_exchangedのsetTimeoutより後に実行されるように
         
         // ステータスメッセージを表示
         showStatus(data.message || `第${data.current_round}回目の交換を開始してください`, 'info');
-        
-        // 交換ボタンの状態を確認
-        const exchangeBtn = document.getElementById('exchange-btn');
-        const exchangeAllBtn = document.getElementById('exchange-all-btn');
-        const skipBtn = document.getElementById('skip-exchange-btn');
-        console.log('交換ボタンの状態:', {
-            'exchange-btn': exchangeBtn ? exchangeBtn.disabled : 'not found',
-            'exchange-all-btn': exchangeAllBtn ? exchangeAllBtn.disabled : 'not found',
-            'skip-exchange-btn': skipBtn ? skipBtn.disabled : 'not found'
-        });
         
         console.log('次のラウンド開始 - currentExchangeRound:', currentExchangeRound, 'maxExchanges:', maxExchanges);
     });
