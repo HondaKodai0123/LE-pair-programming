@@ -97,11 +97,13 @@ function initializeSocket() {
 
     // カード配布
     socket.on('cards_dealt', (data) => {
+        console.log('cards_dealtイベント受信:', data);
         playerHand = sortHand(data.hand); // 自動並び替え
         playerHandBeforeExchange = [...playerHand]; // 初期手札を交換前の手札として保存
         selectedCardIds = []; // 選択をリセット
         selectedCardIndices = []; // 選択をリセット
         gamePhase = 'draw_phase';
+        isWaitingForNextRound = false; // 次のラウンド待ちフラグをリセット
         showScreen('game-screen');
         
         // 交換回数情報を設定
@@ -109,6 +111,7 @@ function initializeSocket() {
             maxExchanges = data.max_exchanges;
             currentExchangeRound = data.current_exchange_round || 1;
             updateExchangeRoundDisplay();
+            console.log('交換回数情報を設定: maxExchanges=', maxExchanges, 'currentExchangeRound=', currentExchangeRound);
         }
         
         // 残りのカード枚数を表示
@@ -123,6 +126,12 @@ function initializeSocket() {
         
         // 山札からカードを配るアニメーション
         dealCardsFromDeck(data.hand);
+        
+        // アニメーション完了後に確実にボタンを有効化（dealCardsFromDeck内でも呼ばれるが、念のため）
+        setTimeout(() => {
+            enableExchangeButtons();
+            console.log('cards_dealtイベント - アニメーション完了後にボタンを有効化');
+        }, 1000); // アニメーション時間を考慮して1秒後
     });
 
     // カード交換完了
