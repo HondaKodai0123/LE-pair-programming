@@ -426,7 +426,8 @@ def handle_exchange_cards(data):
         print(f'[DEBUG] 交換リクエスト: socket_id={request.sid}, player_name={player["name"]}, ready={player["ready"]}, current_round={game.current_exchange_round}, max_exchanges={game.max_exchanges}, card_indices={card_indices}')
         # 全プレイヤーの状態も確認
         for sid, p in game.players.items():
-            print(f'[DEBUG] プレイヤー状態: socket_id={sid}, name={p["name"]}, ready={p["ready"]}, hand={[f"{c["suit"]}{c["label"]}" for c in p["hand"]]}')
+            hand_str = ', '.join([f"{c['suit']}{c['label']}" for c in p['hand']])
+            print(f'[DEBUG] プレイヤー状態: socket_id={sid}, name={p["name"]}, ready={p["ready"]}, hand=[{hand_str}]')
     
     if not game.exchange_cards(request.sid, card_indices):
         print(f'[DEBUG] カード交換処理が失敗しました: socket_id={request.sid}')
@@ -453,7 +454,8 @@ def handle_exchange_cards(data):
         'exchange_count': game.exchange_count.get(request.sid, 0),
         'max_exchanges': game.max_exchanges
     }
-    print(f'[DEBUG] cards_exchangedイベントを送信: socket_id={request.sid}, current_round={emit_data["current_exchange_round"]}, exchange_count={emit_data["exchange_count"]}, max_exchanges={emit_data["max_exchanges"]}, hand={[f"{c["suit"]}{c["label"]}" for c in player["hand"]]}')
+    hand_str = ', '.join([f"{c['suit']}{c['label']}" for c in player['hand']])
+    print(f'[DEBUG] cards_exchangedイベントを送信: socket_id={request.sid}, current_round={emit_data["current_exchange_round"]}, exchange_count={emit_data["exchange_count"]}, max_exchanges={emit_data["max_exchanges"]}, hand=[{hand_str}]')
     emit('cards_exchanged', emit_data)
     
     # 全員が交換を終えたら次のラウンドまたは結果判定
