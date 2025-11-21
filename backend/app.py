@@ -248,6 +248,9 @@ def index():
 def static_files(path):
     """静的ファイルを返す"""
     frontend_path = os.path.join(os.path.dirname(__file__), '../frontend')
+    # クエリパラメータ（?v=xxxなど）を削除
+    if '?' in path:
+        path = path.split('?')[0]
     return send_from_directory(frontend_path, path)
 
 
