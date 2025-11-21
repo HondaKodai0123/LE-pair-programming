@@ -335,8 +335,13 @@ function initializeSocket() {
             max_rounds: data.max_rounds,
             before_isWaitingForNextRound: isWaitingForNextRound,
             before_currentExchangeRound: currentExchangeRound,
-            before_maxExchanges: maxExchanges
+            before_maxExchanges: maxExchanges,
+            before_gamePhase: gamePhase
         });
+        
+        // ゲームフェーズをdraw_phaseに設定（重要：カード選択を有効にするため）
+        gamePhase = 'draw_phase';
+        console.log('[DEBUG] gamePhaseをdraw_phaseに設定');
         
         // 次のラウンドフラグをリセット
         isWaitingForNextRound = false;
@@ -391,14 +396,15 @@ function initializeSocket() {
             console.log('交換ボタンの状態（setTimeout後）:', {
                 'exchange-btn': exchangeBtn ? (exchangeBtn.disabled ? 'disabled' : 'enabled') : 'not found',
                 'exchange-all-btn': exchangeAllBtn ? (exchangeAllBtn.disabled ? 'disabled' : 'enabled') : 'not found',
-                'skip-exchange-btn': skipBtn ? (skipBtn.disabled ? 'disabled' : 'enabled') : 'not found'
+                'skip-exchange-btn': skipBtn ? (skipBtn.disabled ? 'disabled' : 'enabled') : 'not found',
+                'gamePhase': gamePhase
             });
         }, 600); // cards_exchangedのsetTimeout（500ms）より後に実行されるように
         
         // ステータスメッセージを表示
         showStatus(data.message || `第${data.current_round}回目の交換を開始してください`, 'info');
         
-        console.log('次のラウンド開始 - currentExchangeRound:', currentExchangeRound, 'maxExchanges:', maxExchanges);
+        console.log('次のラウンド開始 - currentExchangeRound:', currentExchangeRound, 'maxExchanges:', maxExchanges, 'gamePhase:', gamePhase);
     });
 
     // ゲーム結果
