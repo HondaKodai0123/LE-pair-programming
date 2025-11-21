@@ -243,6 +243,8 @@ function initializeSocket() {
                 
                 // 次のラウンド待ちフラグを設定（setTimeoutの外で設定）
                 // ただし、next_exchange_roundイベントが既に来ている場合は設定しない
+                // 重要: setTimeoutのコールバック内で設定すると、next_exchange_roundイベントの後に実行された場合に状態が上書きされる
+                const wasWaitingBefore = isWaitingForNextRound;
                 if (!isWaitingForNextRound) {
                     isWaitingForNextRound = true;
                     console.log('[DEBUG] cards_exchangedイベント - isWaitingForNextRoundをtrueに設定');
@@ -252,12 +254,14 @@ function initializeSocket() {
                 
                 disableButtonsTimeout = setTimeout(() => {
                     // setTimeout実行時点で、next_exchange_roundイベントが来たかどうかを再確認
+                    // 重要: この時点でisWaitingForNextRoundがfalseになっている場合は、next_exchange_roundイベントが既に来ている
                     if (isWaitingForNextRound && gamePhase === 'draw_phase') {
                         // まだ次のラウンドが始まっていない場合のみ無効化
                         console.log('[DEBUG] cards_exchangedイベント - タイムアウト後にボタンを無効化（相手待ち）', {
                             isWaitingForNextRound: isWaitingForNextRound,
                             gamePhase: gamePhase,
-                            currentExchangeRound: currentExchangeRound
+                            currentExchangeRound: currentExchangeRound,
+                            timeoutDelay: timeoutDelay
                         });
                         disableExchangeButtons();
                         showStatus('カード交換完了。相手の交換を待っています...', 'info');
@@ -265,7 +269,8 @@ function initializeSocket() {
                         console.log('[DEBUG] cards_exchangedイベント - タイムアウト後も次のラウンドが始まっているため、ボタンは無効化しない', {
                             isWaitingForNextRound: isWaitingForNextRound,
                             gamePhase: gamePhase,
-                            currentExchangeRound: currentExchangeRound
+                            currentExchangeRound: currentExchangeRound,
+                            timeoutDelay: timeoutDelay
                         });
                     }
                     disableButtonsTimeout = null;
@@ -314,6 +319,8 @@ function initializeSocket() {
             
             // 次のラウンド待ちフラグを設定（setTimeoutの外で設定）
             // ただし、next_exchange_roundイベントが既に来ている場合は設定しない
+            // 重要: setTimeoutのコールバック内で設定すると、next_exchange_roundイベントの後に実行された場合に状態が上書きされる
+            const wasWaitingBefore = isWaitingForNextRound;
             if (!isWaitingForNextRound) {
                 isWaitingForNextRound = true;
                 console.log('[DEBUG] cards_exchangedイベント - isWaitingForNextRoundをtrueに設定');
@@ -323,12 +330,14 @@ function initializeSocket() {
             
             disableButtonsTimeout = setTimeout(() => {
                 // setTimeout実行時点で、next_exchange_roundイベントが来たかどうかを再確認
+                // 重要: この時点でisWaitingForNextRoundがfalseになっている場合は、next_exchange_roundイベントが既に来ている
                 if (isWaitingForNextRound && gamePhase === 'draw_phase') {
                     // まだ次のラウンドが始まっていない場合のみ無効化
                     console.log('[DEBUG] cards_exchangedイベント - タイムアウト後にボタンを無効化（相手待ち）', {
                         isWaitingForNextRound: isWaitingForNextRound,
                         gamePhase: gamePhase,
-                        currentExchangeRound: currentExchangeRound
+                        currentExchangeRound: currentExchangeRound,
+                        timeoutDelay: timeoutDelay
                     });
                     disableExchangeButtons();
                     showStatus('カード交換完了。相手の交換を待っています...', 'info');
@@ -336,7 +345,8 @@ function initializeSocket() {
                     console.log('[DEBUG] cards_exchangedイベント - タイムアウト後も次のラウンドが始まっているため、ボタンは無効化しない', {
                         isWaitingForNextRound: isWaitingForNextRound,
                         gamePhase: gamePhase,
-                        currentExchangeRound: currentExchangeRound
+                        currentExchangeRound: currentExchangeRound,
+                        timeoutDelay: timeoutDelay
                     });
                 }
                 disableButtonsTimeout = null;
@@ -400,10 +410,17 @@ function initializeSocket() {
         console.log('[DEBUG] isWaitingForNextRoundをfalseにリセット');
         
         // 既存のsetTimeoutをキャンセル（disableExchangeButtonsが呼ばれないようにする）
+        // 重要: cards_exchangedイベントのsetTimeoutを確実にキャンセルする
         if (disableButtonsTimeout) {
-            console.log('[DEBUG] next_exchange_roundイベント - 既存のdisableButtonsTimeoutをキャンセル');
+            console.log('[DEBUG] next_exchange_roundイベント - 既存のdisableButtonsTimeoutをキャンセル', {
+                timeoutId: disableButtonsTimeout,
+                before_isWaitingForNextRound: isWaitingForNextRound
+            });
             clearTimeout(disableButtonsTimeout);
             disableButtonsTimeout = null;
+            console.log('[DEBUG] next_exchange_roundイベント - disableButtonsTimeoutをキャンセル完了');
+        } else {
+            console.log('[DEBUG] next_exchange_roundイベント - disableButtonsTimeoutは存在しない（既にキャンセル済みまたは未設定）');
         }
         
         // 交換回数情報を更新（必ずここで更新する）
