@@ -1402,7 +1402,20 @@ function enableExchangeButtons() {
 function disableExchangeButtons() {
     // 次のラウンドが始まっている場合は無効化しない
     if (!isWaitingForNextRound) {
-        console.log('disableExchangeButtons - isWaitingForNextRound=falseのため、無効化をスキップ');
+        console.log('disableExchangeButtons - isWaitingForNextRound=falseのため、無効化をスキップ', {
+            isWaitingForNextRound: isWaitingForNextRound,
+            gamePhase: gamePhase,
+            currentExchangeRound: currentExchangeRound
+        });
+        return;
+    }
+    
+    // gamePhaseがdraw_phaseでない場合も無効化しない（次のラウンドが始まっている可能性がある）
+    if (gamePhase !== 'draw_phase') {
+        console.log('disableExchangeButtons - gamePhaseがdraw_phaseでないため、無効化をスキップ', {
+            gamePhase: gamePhase,
+            isWaitingForNextRound: isWaitingForNextRound
+        });
         return;
     }
     
@@ -1425,7 +1438,7 @@ function disableExchangeButtons() {
         console.log('skip-exchange-btnを無効化しました');
     }
     
-    console.log('disableExchangeButtons完了 - isWaitingForNextRound:', isWaitingForNextRound);
+    console.log('disableExchangeButtons完了 - isWaitingForNextRound:', isWaitingForNextRound, 'gamePhase:', gamePhase);
 }
 
 /**
