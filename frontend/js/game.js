@@ -56,6 +56,12 @@ function initializeSocket() {
     try {
         socket = io(SERVER_URL);
         
+        if (!socket) {
+            console.error('[DEBUG] Socket.IO初期化失敗: socketオブジェクトが作成されませんでした');
+            showStatus('Socket.IOの初期化に失敗しました。ページをリロードしてください。', 'error');
+            return;
+        }
+        
         socket.on('connect', () => {
             console.log('[DEBUG] Socket.IO接続成功: socket.id=', socket.id);
         });
@@ -64,14 +70,9 @@ function initializeSocket() {
             console.error('[DEBUG] Socket.IO接続エラー:', error);
             showStatus('サーバーへの接続に失敗しました。ページをリロードしてください。', 'error');
         });
-        
-    } catch (error) {
-        console.error('[DEBUG] Socket.IO初期化エラー:', error);
-        showStatus('Socket.IOの初期化に失敗しました: ' + error.message, 'error');
-    }
 
-    // 接続イベント
-    socket.on('connected', (data) => {
+        // 接続イベント
+        socket.on('connected', (data) => {
         console.log('[DEBUG] サーバーに接続しました:', data);
         showStatus('サーバーに接続しました', 'success');
     });
@@ -432,18 +433,30 @@ function initializeSocket() {
         }
     });
 
-    // 戦績リセットレスポンス
-    socket.on('stats_reset_response', (data) => {
-        console.log('戦績をリセット:', data);
-        showStatus(data.message, 'success');
-        // キャッシュをクリア
-        cachedStats = {};
-        cachedAllStats = {};
-        // 統計モーダルが表示されている場合は更新
-        if (document.getElementById('stats-modal')?.style.display === 'block') {
-            showStatsModal();
-        }
-    });
+        // 戦績リセットレスポンス
+        socket.on('stats_reset_response', (data) => {
+            console.log('戦績をリセット:', data);
+            showStatus(data.message, 'success');
+            // キャッシュをクリア
+            cachedStats = {};
+            cachedAllStats = {};
+            // 統計モーダルが表示されている場合は更新
+            if (document.getElementById('stats-modal')?.style.display === 'block') {
+                showStatsModal();
+            }
+        });
+        
+    } catch (error) {
+        console.error('[DEBUG] Socket.IO初期化エラー:', error);
+        console.error('[DEBUG] エラーの詳細:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
+        showStatus('Socket.IOの初期化に失敗しました: ' + error.message, 'error');
+    }
+    
+    console.log('[DEBUG] Socket.IO初期化完了: socket=', socket);
 }
 
 /**
