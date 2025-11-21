@@ -288,6 +288,17 @@ function initializeSocket() {
 
     // 相手待ち
     socket.on('waiting_for_opponent', (gameState) => {
+        console.log('[DEBUG] waiting_for_opponentイベント受信:', {
+            isWaitingForNextRound: isWaitingForNextRound,
+            currentExchangeRound: currentExchangeRound,
+            maxExchanges: maxExchanges
+        });
+        // 次のラウンドが既に始まっている場合は、waiting_for_opponentイベントを無視
+        // （next_exchange_roundイベントが既に来ているため）
+        if (!isWaitingForNextRound) {
+            console.log('[DEBUG] waiting_for_opponentイベントを無視（次のラウンドが既に始まっている）');
+            return;
+        }
         showStatus('相手の交換を待っています...', 'info');
     });
 
