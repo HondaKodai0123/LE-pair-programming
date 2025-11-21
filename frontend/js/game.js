@@ -200,6 +200,12 @@ function initializeSocket() {
         const message = data.message || '全員の交換が完了しました。結果を表示します...';
         showStatus(message, 'info');
         console.log('全員の交換完了:', data);
+        // 交換回数表示を更新（all_players_readyイベントには現在のラウンド情報が含まれる場合がある）
+        if (data.current_round !== undefined && maxExchanges !== null) {
+            currentExchangeRound = data.current_round;
+            updateExchangeRoundDisplay();
+            console.log('all_players_readyで交換回数表示を更新: currentExchangeRound=', currentExchangeRound);
+        }
     });
 
     // 交換回数選択を促す

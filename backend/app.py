@@ -474,11 +474,14 @@ def handle_exchange_cards(data):
             print(f'次のラウンドに進みます: current_exchange_round={game.current_exchange_round}, max_exchanges={game.max_exchanges}')
             
             # 次のラウンド開始を通知（increment後なので、current_exchange_roundは既に増えている）
+            # 表示用に+1（0ベースから1ベースに変換）
+            display_round = game.current_exchange_round + 1
             socketio.emit('next_exchange_round', {
-                'message': f'第{game.current_exchange_round}回目の交換を開始してください',
-                'current_round': game.current_exchange_round,
+                'message': f'第{display_round}回目の交換を開始してください',
+                'current_round': display_round,  # 表示用に+1
                 'max_rounds': game.max_exchanges
             }, room=room_id)
+            print(f'next_exchange_roundイベントを送信: current_round={display_round}, max_rounds={game.max_exchanges}')
     else:
         # 相手が交換中であることを通知
         socketio.emit('waiting_for_opponent', game.get_state(), room=room_id)
