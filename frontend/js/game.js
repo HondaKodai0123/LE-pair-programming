@@ -230,17 +230,33 @@ function initializeSocket() {
                 
                 // 次のラウンドが始まらない場合は、相手の交換待ちなので無効化する
                 // ただし、next_exchange_roundイベントが来る可能性があるので、少し待つ
-                // 注意: 2ターン目以降は、相手が既に交換を完了している可能性があるため、
-                // より長い時間待つ必要がある
-                const timeoutDelay = currentExchangeRound >= maxExchanges ? 1000 : 500;
+                // 注意: data.current_exchange_roundを使用して、現在のラウンドを正確に判断する
+                const currentRound = data.current_exchange_round || currentExchangeRound;
+                const maxRounds = data.max_exchanges || maxExchanges;
+                // 最後のラウンドでない場合、next_exchange_roundイベントが来る可能性があるため、より長い時間待つ
+                const timeoutDelay = (currentRound < maxRounds) ? 1500 : 500;
+                console.log('[DEBUG] cards_exchangedイベント - timeoutDelayを計算:', {
+                    currentRound: currentRound,
+                    maxRounds: maxRounds,
+                    timeoutDelay: timeoutDelay,
+                    currentExchangeRound: currentExchangeRound,
+                    maxExchanges: maxExchanges
+                });
                 disableButtonsTimeout = setTimeout(() => {
                     if (isWaitingForNextRound) {
                         // まだ次のラウンドが始まっていない場合のみ無効化
-                        console.log('cards_exchangedイベント - タイムアウト後にボタンを無効化（相手待ち）');
+                        console.log('[DEBUG] cards_exchangedイベント - タイムアウト後にボタンを無効化（相手待ち）', {
+                            isWaitingForNextRound: isWaitingForNextRound,
+                            gamePhase: gamePhase,
+                            currentExchangeRound: currentExchangeRound
+                        });
                         disableExchangeButtons();
                         showStatus('カード交換完了。相手の交換を待っています...', 'info');
                     } else {
-                        console.log('cards_exchangedイベント - タイムアウト後も次のラウンドが始まっているため、ボタンは無効化しない');
+                        console.log('[DEBUG] cards_exchangedイベント - タイムアウト後も次のラウンドが始まっているため、ボタンは無効化しない', {
+                            isWaitingForNextRound: isWaitingForNextRound,
+                            gamePhase: gamePhase
+                        });
                     }
                     disableButtonsTimeout = null;
                 }, timeoutDelay); // next_exchange_roundイベントが来るまで待つ
@@ -275,17 +291,33 @@ function initializeSocket() {
             
             // 次のラウンドが始まらない場合は、相手の交換待ちなので無効化する
             // ただし、next_exchange_roundイベントが来る可能性があるので、少し待つ
-            // 注意: 2ターン目以降は、相手が既に交換を完了している可能性があるため、
-            // より長い時間待つ必要がある
-            const timeoutDelay = currentExchangeRound >= maxExchanges ? 1000 : 500;
+            // 注意: data.current_exchange_roundを使用して、現在のラウンドを正確に判断する
+            const currentRound = data.current_exchange_round || currentExchangeRound;
+            const maxRounds = data.max_exchanges || maxExchanges;
+            // 最後のラウンドでない場合、next_exchange_roundイベントが来る可能性があるため、より長い時間待つ
+            const timeoutDelay = (currentRound < maxRounds) ? 1500 : 500;
+            console.log('[DEBUG] cards_exchangedイベント - timeoutDelayを計算:', {
+                currentRound: currentRound,
+                maxRounds: maxRounds,
+                timeoutDelay: timeoutDelay,
+                currentExchangeRound: currentExchangeRound,
+                maxExchanges: maxExchanges
+            });
             disableButtonsTimeout = setTimeout(() => {
                 if (isWaitingForNextRound) {
                     // まだ次のラウンドが始まっていない場合のみ無効化
-                    console.log('cards_exchangedイベント - タイムアウト後にボタンを無効化（相手待ち）');
+                    console.log('[DEBUG] cards_exchangedイベント - タイムアウト後にボタンを無効化（相手待ち）', {
+                        isWaitingForNextRound: isWaitingForNextRound,
+                        gamePhase: gamePhase,
+                        currentExchangeRound: currentExchangeRound
+                    });
                     disableExchangeButtons();
                     showStatus('カード交換完了。相手の交換を待っています...', 'info');
                 } else {
-                    console.log('cards_exchangedイベント - タイムアウト後も次のラウンドが始まっているため、ボタンは無効化しない');
+                    console.log('[DEBUG] cards_exchangedイベント - タイムアウト後も次のラウンドが始まっているため、ボタンは無効化しない', {
+                        isWaitingForNextRound: isWaitingForNextRound,
+                        gamePhase: gamePhase
+                    });
                 }
                 disableButtonsTimeout = null;
             }, timeoutDelay); // next_exchange_roundイベントが来るまで待つ
