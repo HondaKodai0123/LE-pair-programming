@@ -164,8 +164,19 @@ function initializeSocket() {
                 
                 renderPlayerCardsWithAnimation(); // アニメーション付きで描画
                 renderPlayerCardsBefore(); // 交換前の手札を表示
-                disableExchangeButtons();
-                showStatus('カード交換完了。相手の交換を待っています...', 'info');
+                
+                // 次のラウンドに進む可能性があるので、一旦ボタンを無効化しない
+                // 次のラウンドが始まればenableExchangeButtons()が呼ばれる
+                // 次のラウンドが始まらない場合は、相手の交換待ちなので無効化する
+                const exchangeBtn = document.getElementById('exchange-btn');
+                if (exchangeBtn && !exchangeBtn.disabled) {
+                    // まだ有効な場合は無効化（相手の交換待ち）
+                    disableExchangeButtons();
+                    showStatus('カード交換完了。相手の交換を待っています...', 'info');
+                } else {
+                    // 既に無効化されている場合は、next_exchange_roundイベントで再有効化される
+                    showStatus('カード交換完了。相手の交換を待っています...', 'info');
+                }
             }, 300); // フェードアウトアニメーションの時間
         } else {
             // コンテナがない場合は通常通り処理
@@ -185,8 +196,19 @@ function initializeSocket() {
             
             renderPlayerCards();
             renderPlayerCardsBefore();
-            disableExchangeButtons();
-            showStatus('カード交換完了。相手の交換を待っています...', 'info');
+            
+            // 次のラウンドに進む可能性があるので、一旦ボタンを無効化しない
+            // 次のラウンドが始まればenableExchangeButtons()が呼ばれる
+            // 次のラウンドが始まらない場合は、相手の交換待ちなので無効化する
+            const exchangeBtn = document.getElementById('exchange-btn');
+            if (exchangeBtn && !exchangeBtn.disabled) {
+                // まだ有効な場合は無効化（相手の交換待ち）
+                disableExchangeButtons();
+                showStatus('カード交換完了。相手の交換を待っています...', 'info');
+            } else {
+                // 既に無効化されている場合は、next_exchange_roundイベントで再有効化される
+                showStatus('カード交換完了。相手の交換を待っています...', 'info');
+            }
         }
     });
 
