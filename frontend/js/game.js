@@ -1107,18 +1107,63 @@ function getSelectedCardIndices() {
  * 交換ボタンを有効化
  */
 function enableExchangeButtons() {
-    document.getElementById('exchange-btn').disabled = false;
-    document.getElementById('exchange-all-btn').disabled = false;
-    document.getElementById('skip-exchange-btn').disabled = false;
+    const exchangeBtn = document.getElementById('exchange-btn');
+    const exchangeAllBtn = document.getElementById('exchange-all-btn');
+    const skipBtn = document.getElementById('skip-exchange-btn');
+    
+    if (exchangeBtn) {
+        exchangeBtn.disabled = false;
+        console.log('exchange-btnを有効化しました');
+    } else {
+        console.warn('exchange-btnが見つかりません');
+    }
+    
+    if (exchangeAllBtn) {
+        exchangeAllBtn.disabled = false;
+        console.log('exchange-all-btnを有効化しました');
+    } else {
+        console.warn('exchange-all-btnが見つかりません');
+    }
+    
+    if (skipBtn) {
+        skipBtn.disabled = false;
+        console.log('skip-exchange-btnを有効化しました');
+    } else {
+        console.warn('skip-exchange-btnが見つかりません');
+    }
+    
+    // 最終的な状態を確認
+    console.log('enableExchangeButtons完了 - ボタンの状態:', {
+        'exchange-btn': exchangeBtn ? (exchangeBtn.disabled ? 'disabled' : 'enabled') : 'not found',
+        'exchange-all-btn': exchangeAllBtn ? (exchangeAllBtn.disabled ? 'disabled' : 'enabled') : 'not found',
+        'skip-exchange-btn': skipBtn ? (skipBtn.disabled ? 'disabled' : 'enabled') : 'not found'
+    });
 }
 
 /**
  * 交換ボタンを無効化
  */
 function disableExchangeButtons() {
-    document.getElementById('exchange-btn').disabled = true;
-    document.getElementById('exchange-all-btn').disabled = true;
-    document.getElementById('skip-exchange-btn').disabled = true;
+    const exchangeBtn = document.getElementById('exchange-btn');
+    const exchangeAllBtn = document.getElementById('exchange-all-btn');
+    const skipBtn = document.getElementById('skip-exchange-btn');
+    
+    if (exchangeBtn) {
+        exchangeBtn.disabled = true;
+        console.log('exchange-btnを無効化しました');
+    }
+    
+    if (exchangeAllBtn) {
+        exchangeAllBtn.disabled = true;
+        console.log('exchange-all-btnを無効化しました');
+    }
+    
+    if (skipBtn) {
+        skipBtn.disabled = true;
+        console.log('skip-exchange-btnを無効化しました');
+    }
+    
+    console.log('disableExchangeButtons完了 - isWaitingForNextRound:', isWaitingForNextRound);
 }
 
 /**
